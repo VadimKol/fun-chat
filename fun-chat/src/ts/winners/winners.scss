@@ -1,0 +1,100 @@
+.winners-screen {
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--background);
+  &_show {
+    display: block;
+  }
+}
+
+.winners {
+  position: relative;
+  padding: 0 20px 45px;
+  box-sizing: border-box;
+  &-page {
+    &-header {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      gap: 50px;
+      &__item {
+        position: relative;
+        &:nth-child(2) {
+          width: 50px;
+          text-align: center;
+        }
+        &:nth-child(3) {
+          margin-right: -10px;
+          width: 125px;
+          text-align: center;
+        }
+        &:nth-child(4) {
+          margin-right: -20px;
+        }
+        &:nth-child(1),
+        &:nth-child(4),
+        &:nth-child(5) {
+          @media (hover: hover) {
+            &:hover {
+              cursor: pointer;
+              user-select: none;
+            }
+          }
+        }
+        &_asc,
+        &_desc {
+          &::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: -3px;
+            width: 10px;
+            height: 16px;
+            display: inline-block;
+            background-size: cover;
+            background-position: center;
+          }
+        }
+        &_asc::after {
+          background-image: url(../../assets/img/up.svg);
+          }
+        &_desc::after {
+          background-image: url(../../assets/img/down.svg);
+        }
+      }
+    }
+  }
+  &-controls {
+    position: absolute;
+    bottom: 0;
+    &__prev {
+      margin-right: 15px;
+    }
+  }
+}
+
+.winner {
+  display: flex;
+  gap: 50px;
+  &__id {
+    width: 50px;
+  }
+  &__car-img {
+    width: 50px;
+    height: 23px;
+  }
+  &__name {
+    width: 125px;
+    text-align: center;
+  }
+  &__wins {
+    width: 25px;
+  }
+  &__best-time {
+    width: 85px;
+  }
+}

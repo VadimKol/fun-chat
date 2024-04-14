@@ -1,0 +1,19 @@
+.button {
+  font-family: "Gagalin", sans-serif;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 10px 15px;
+  border: 0;
+  outline: none;
+  border-radius: 6px;
+  box-sizing: content-box;
+  background-color: var(--btn-back);
+  text-transform: uppercase;
+  transition: background-color 0.3s;
+  @media (hover: hover) {
+    &:hover {
+        cursor: pointer;
+        background-color: var(--btn-back-hover);
+    }
+  }
+}
