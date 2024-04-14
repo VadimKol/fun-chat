@@ -9,3 +9,13 @@ export interface Winner {
   wins: number;
   time: number;
 }
+
+export interface Options {
+  tag?: string;
+  className?: string;
+  text?: string;
+}
+
+export interface ButtonOptions extends Options {
+  onClick?: EventListener;
+}

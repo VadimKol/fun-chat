@@ -1,5 +1,5 @@
 import './winners.scss';
-import Button from '../components/button/button';
+// import Button from '../components/button/button';
 import AsyncAPI from '../async-api/async-api';
 import { Winner } from '../util/types';
 
@@ -67,15 +67,15 @@ class Winners {
     this.winsSort.classList.add('winners-page-header__item');
     this.timeSort.classList.add('winners-page-header__item');
 
-    const toGarageBtn = new Button('nav__garage').createButton('To Garage');
-    const toWinnersBtn = new Button('nav__winners').createButton('To Winners');
+    // const toGarageBtn = new Button('nav__garage').createButton('To Garage');
+    // const toWinnersBtn = new Button('nav__winners').createButton('To Winners');
 
-    toGarageBtn.addEventListener('click', () => this.toGarage());
-    toWinnersBtn.addEventListener('click', () => this.toWinners());
+    // toGarageBtn.addEventListener('click', () => this.toGarage());
+    // toWinnersBtn.addEventListener('click', () => this.toWinners());
 
     this.feedWinners();
 
-    this.nav.append(toGarageBtn, toWinnersBtn);
+    // this.nav.append(toGarageBtn, toWinnersBtn);
     this.header.append(this.nav);
     this.main.append(this.winnersPages);
     this.winnersScreen.append(this.header, this.main);
@@ -91,12 +91,12 @@ class Winners {
     const winnersControls = document.createElement('div');
     winnersControls.classList.add('winners-controls');
 
-    const prevPageBtn = new Button('winners-controls__prev').createButton('<-');
-    const nextPageBtn = new Button('winners-controls__next').createButton('->');
-    prevPageBtn.addEventListener('click', () => this.movePage(false));
-    nextPageBtn.addEventListener('click', () => this.movePage(true));
+    // const prevPageBtn = new Button('winners-controls__prev').createButton('<-');
+    // const nextPageBtn = new Button('winners-controls__next').createButton('->');
+    // prevPageBtn.addEventListener('click', () => this.movePage(false));
+    // nextPageBtn.addEventListener('click', () => this.movePage(true));
 
-    winnersControls.append(prevPageBtn, nextPageBtn);
+    // winnersControls.append(prevPageBtn, nextPageBtn);
     this.winnersPages.append(winnersTitle, winnersControls);
     this.addPage();
   }

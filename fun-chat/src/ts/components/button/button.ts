@@ -1,19 +1,19 @@
 import './button.scss';
+import { ButtonOptions } from '../../util/types';
+import Component from '../../util/component';
 
-class Button {
-  private btn: HTMLButtonElement;
-
-  constructor(className: string) {
-    this.btn = document.createElement('button');
-    this.btn.classList.add(className);
+export default class Button extends Component {
+  private onClick: EventListener | null = null;
+  constructor({ className, text, onClick }: ButtonOptions) {
+    super({ tag: 'button', className, text });
+    if (onClick) {
+      this.onClick = onClick;
+      this.addListener('click', this.onClick);
+    }
   }
 
-  public createButton(name: string = '') {
-    this.btn.classList.add('button');
-    this.btn.type = 'button';
-    this.btn.append(name);
-    return this.btn;
+  destroy() {
+    if (this.onClick) this.removeListener('click', this.onClick);
+    super.destroy();
   }
 }
-
-export default Button;
