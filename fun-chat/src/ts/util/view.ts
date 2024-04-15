@@ -12,6 +12,10 @@ export default class View {
     return this.viewElementCreator.getNode();
   }
 
+  getComponent(): Component {
+    return this.viewElementCreator;
+  }
+
   createView(params: Options): Component {
     const elementParams = {
       tag: params.tag,

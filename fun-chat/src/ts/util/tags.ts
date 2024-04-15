@@ -11,7 +11,7 @@ export const label = (className: string, text: string) => new Component({ tag: '
 
 export const h1 = (className: string, text: string) => new Component({ tag: 'h1', className, text });
 
-export const h3 = (className: string, text: string) => new Component({ tag: 'h3', className, text });
+export const h2 = (className: string, text: string) => new Component({ tag: 'h2', className, text });
 
 /* export const nav = (className: string, ...children: Component[]) =>
   new Component({ tag: 'nav', className }, ...children); */

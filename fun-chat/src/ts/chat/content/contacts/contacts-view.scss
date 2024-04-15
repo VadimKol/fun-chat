@@ -1,0 +1,13 @@
+.contacts {
+  width: 35%;
+  &__search {
+    width: 100%;
+  }
+  &__users {
+    height: 60vh;
+    box-sizing: border-box;
+    border: 1px solid darkgray;
+    border-radius: 6px;
+    background-color: wheat;
+  }
+}

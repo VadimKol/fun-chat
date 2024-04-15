@@ -23,22 +23,22 @@ export default class LoginView extends View {
         div(
           'name-group',
           label('name-group__name-field', 'Login'),
-          input('name-group__login', LoginView.ValidateInput.bind(this), 'text', 'Login'),
+          input('name-group__login', LoginView.validateInput.bind(this), 'text', 'Login'),
         ),
         div(
           'password-group',
           label('password-group__pass-field', 'Password'),
-          input('password-group__password', LoginView.ValidateInput.bind(this), 'password', 'Password'),
+          input('password-group__password', LoginView.validateInput.bind(this), 'password', 'Password'),
         ),
       ),
-      button('submit', 'Enter', LoginView.EnterApp.bind(this), 'submit'),
+      button('submit', 'Enter', LoginView.enterApp.bind(this), 'submit'),
       button('info', 'Info', LoginView.getInfo.bind(this), 'button'),
     ]);
   }
 
-  public static EnterApp() {}
+  public static enterApp() {}
 
   public static getInfo() {}
 
-  public static ValidateInput() {}
+  public static validateInput() {}
 }

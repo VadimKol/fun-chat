@@ -1,0 +1,14 @@
+.footer {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: burlywood;
+  border-radius: 40px;
+  padding: 10px;
+  box-sizing: border-box;
+  margin: 20px;
+  height: 10vh;
+  @media screen and (max-width: 800px) {
+    height: 7vh;
+  }
+}

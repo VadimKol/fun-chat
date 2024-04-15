@@ -1,0 +1,32 @@
+.header {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: burlywood;
+  border-radius: 40px;
+  padding: 10px;
+  box-sizing: border-box;
+  &-wrapper {
+    display: flex;
+    width: 80%;
+    justify-content: space-evenly;
+    align-items: center;
+    @media screen and (max-width: 800px) {
+      width: 100%;
+      justify-content: space-around;
+    }
+  }
+  &-buttons {
+    display: flex;
+    width: 20%;
+    justify-content: space-evenly;
+    @media screen and (max-width: 800px) {
+      width: 100%;
+      justify-content: space-around;
+    }
+  }
+  @media screen and (max-width: 800px) {
+    flex-direction: column;
+  }
+  margin: 20px;
+}
