@@ -1,0 +1,42 @@
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 40px;
+  margin: auto;
+  max-width: 330px;
+  max-height: min-content;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  padding: 16px;
+  text-align: center;
+  background-color: burlywood;
+}
+
+.login-group {
+  width: 270px;
+  margin-bottom: 20px;
+}
+.name-group,
+.password-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  &__name-field,
+  &__pass-field {
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+}
+.submit {
+  margin-bottom: 10px;
+  width: 100px;
+}
+.info {
+  width: 100px;
+}
