@@ -1,6 +1,6 @@
 import './dialog-view.scss';
-import { button, input, div, label } from '../../../util/tags';
-import View from '../../../util/view';
+import { button, input, div, label } from '../../../../util/tags';
+import View from '../../../view';
 
 export default class DialogView extends View {
   constructor() {
@@ -13,10 +13,6 @@ export default class DialogView extends View {
   }
 
   setContent() {
-    /*         const htmlElement = this.viewElementCreator.getElement();
-        while (htmlElement.firstElementChild) {
-            htmlElement.firstElementChild.remove();
-        } */
     // TODO здесь нужен будет доступ к этим дивам, то есть в переменные их
     this.viewElementCreator.appendChildren([
       div('dialog-recipient', label('dialog-recipient__name', 'User'), label('dialog-recipient__status', 'Offline')),

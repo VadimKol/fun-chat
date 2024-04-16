@@ -1,6 +1,6 @@
 import './contacts-view.scss';
-import { ul, input } from '../../../util/tags';
-import View from '../../../util/view';
+import { ul, input } from '../../../../util/tags';
+import View from '../../../view';
 
 export default class ContactsView extends View {
   constructor() {
@@ -13,10 +13,6 @@ export default class ContactsView extends View {
   }
 
   setContent() {
-    /*         const htmlElement = this.viewElementCreator.getElement();
-        while (htmlElement.firstElementChild) {
-            htmlElement.firstElementChild.remove();
-        } */
     this.viewElementCreator.appendChildren([
       input('contacts__search', ContactsView.searchUser.bind(this), 'text', 'Search...'),
       ul('contacts__users'),

@@ -10,6 +10,17 @@ export interface Winner {
   time: number;
 }
 
+export enum Pages {
+  LOGIN = 'login',
+  CHAT = 'chat',
+  ABOUT = 'about',
+}
+
+export interface Route {
+  path: string;
+  callback: () => void;
+}
+
 export interface Options {
   tag?: string;
   className?: string;

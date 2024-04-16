@@ -1,6 +1,6 @@
 import './footer-view.scss';
-import { label } from '../../util/tags';
-import View from '../../util/view';
+import { label } from '../../../util/tags';
+import View from '../../view';
 
 export default class FooterView extends View {
   constructor() {
@@ -13,10 +13,6 @@ export default class FooterView extends View {
   }
 
   setContent() {
-    /*         const htmlElement = this.viewElementCreator.getElement();
-        while (htmlElement.firstElementChild) {
-            htmlElement.firstElementChild.remove();
-        } */
     this.viewElementCreator.appendChildren([
       label('footer__school', 'RSSchool'),
       label('footer__author', 'Vadim Kolymbet'),

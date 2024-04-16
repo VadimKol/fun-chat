@@ -15,6 +15,13 @@
   padding: 16px;
   text-align: center;
   background-color: burlywood;
+  &__submit {
+    margin-bottom: 10px;
+    width: 100px;
+  }
+  &__info {
+    width: 100px;
+  }
 }
 
 .login-group {
@@ -32,11 +39,4 @@
     font-weight: 600;
     letter-spacing: 1px;
   }
-}
-.submit {
-  margin-bottom: 10px;
-  width: 100px;
-}
-.info {
-  width: 100px;
 }

@@ -1,5 +1,5 @@
-import Component from './component';
-import { Options } from './types';
+import Component from '../util/component';
+import { Options } from '../util/types';
 
 export default class View {
   protected viewElementCreator: Component;
