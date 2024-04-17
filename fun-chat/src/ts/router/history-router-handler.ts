@@ -23,27 +23,31 @@ export default class HistoryRouterHandler {
   }
 
   public navigate(url: string | null) {
+    const currentView = this.currentComponent.getNode().classList[0];
+
     if (typeof url === 'string') HistoryRouterHandler.setHistory(url);
 
-    const path = window.location.pathname.split('/').pop();
-    if (!path) return;
+    if (window.location.hash !== '') {
+      if (currentView === 'login-form') HistoryRouterHandler.setHistory(Pages.LOGIN);
+      if (currentView === 'chat') HistoryRouterHandler.setHistory(Pages.CHAT);
+      return;
+    }
 
-    // редирект на логин, если вводит chat
-    if (
-      path === Pages.CHAT &&
-      this.currentComponent.getNode().classList[0] === 'login-form' &&
-      sessionStorage.getItem('loginVK') === null
-    ) {
+    const path = window.location.pathname.split('/').pop();
+    if (!path) {
+      const where = sessionStorage.getItem('loginVK') !== null ? Pages.CHAT : Pages.LOGIN;
+      HistoryRouterHandler.setHistory(where);
+      return;
+    }
+
+    // редирект на логин, если неавторизованный вводит chat
+    if (path === Pages.CHAT && currentView === 'login-form' && sessionStorage.getItem('loginVK') === null) {
       HistoryRouterHandler.setHistory(Pages.LOGIN);
       return;
     }
 
-    // редирект на чат, если вводит login
-    if (
-      path === Pages.LOGIN &&
-      this.currentComponent.getNode().classList[0] === 'chat' &&
-      sessionStorage.getItem('loginVK') !== null
-    ) {
+    // редирект на чат, если авторизованный вводит login
+    if (path === Pages.LOGIN && currentView === 'chat' && sessionStorage.getItem('loginVK') !== null) {
       HistoryRouterHandler.setHistory(Pages.CHAT);
       return;
     }
@@ -51,14 +55,9 @@ export default class HistoryRouterHandler {
     // редирект в зависимости от авторизации
     // если вводит что-то не то
     if (!(path === Pages.CHAT || path === Pages.LOGIN || path === Pages.ABOUT)) {
-      if (this.currentComponent.getNode().classList[0] === 'login-form') {
-        HistoryRouterHandler.setHistory(Pages.LOGIN);
-        return;
-      }
-      if (this.currentComponent.getNode().classList[0] === 'chat') {
-        HistoryRouterHandler.setHistory(Pages.CHAT);
-        return;
-      }
+      if (currentView === 'login-form') HistoryRouterHandler.setHistory(Pages.LOGIN);
+      if (currentView === 'chat') HistoryRouterHandler.setHistory(Pages.CHAT);
+      return;
     }
 
     this.currentComponent.destroy();

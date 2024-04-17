@@ -14,7 +14,7 @@ class App {
 
   public start(): void {
     const isNew = sessionStorage.getItem('loginVK') === null;
-    const startView: LoginView | ChatView = isNew ? new LoginView(this.router) : new ChatView(this.router);
+    const startView = isNew ? new LoginView(this.router) : new ChatView(this.router);
     document.body.append(startView.getHtmlElement());
 
     // this.body.addEventListener('updateWinner', () => winners.updateWinnerInfo());
