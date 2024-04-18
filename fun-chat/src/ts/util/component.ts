@@ -57,6 +57,10 @@ export default class Component {
     this.node.classList.toggle(className);
   }
 
+  public hasClass(className: string): boolean {
+    return this.node.classList.contains(className);
+  }
+
   public addListener(event: string, listener: EventListener, options: boolean | AddEventListenerOptions = false) {
     this.node.addEventListener(event, listener, options);
   }

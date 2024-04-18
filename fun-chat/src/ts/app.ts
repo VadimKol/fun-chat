@@ -1,5 +1,6 @@
 import Router from './router/router';
-import { Pages, Route } from './util/types';
+import ServerConnection from './server-connection/server-connection';
+import { AuthRequest, Pages, RequestType, Route } from './util/types';
 import AboutView from './view/about/about-view';
 import ChatView from './view/chat/chat-view';
 import LoginView from './view/login/login-view';
@@ -7,17 +8,42 @@ import LoginView from './view/login/login-view';
 class App {
   private router: Router;
 
+  private serverConnection: ServerConnection;
+
   constructor() {
     document.body.classList.add('body');
-    this.router = new Router(this.createRoutes());
+    this.preLoginError = this.preLoginError.bind(this);
+    this.router = new Router(this.createRoutes(), this.preLoginError);
+    this.serverConnection = new ServerConnection('ws://localhost:4000', this.router);
+    this.preOpen = this.preOpen.bind(this);
   }
 
   public start(): void {
-    const isNew = sessionStorage.getItem('loginVK') === null;
-    const startView = isNew ? new LoginView(this.router) : new ChatView(this.router);
-    document.body.append(startView.getHtmlElement());
+    if (sessionStorage.getItem('loginVK') !== null) {
+      document.body.addEventListener('LoginError', this.preLoginError);
+      this.serverConnection.connection.addEventListener('open', this.preOpen);
+    }
+  }
 
-    // this.body.addEventListener('updateWinner', () => winners.updateWinnerInfo());
+  private preOpen() {
+    this.serverConnection.connection.removeEventListener('open', this.preOpen);
+
+    const user = sessionStorage.getItem('loginVK');
+    if (!user) return;
+
+    const authRequest: AuthRequest = {
+      id: 'login',
+      type: RequestType.USER_LOGIN,
+      payload: {
+        user: JSON.parse(user),
+      },
+    };
+    this.serverConnection.sendRequest(JSON.stringify(authRequest));
+  }
+
+  private preLoginError() {
+    sessionStorage.removeItem('loginVK');
+    this.router.navigate(Pages.LOGIN);
   }
 
   private createRoutes(): Route[] {
@@ -25,13 +51,13 @@ class App {
       {
         path: `${Pages.LOGIN}`,
         callback: () => {
-          document.body.append(new LoginView(this.router).getHtmlElement());
+          document.body.append(new LoginView(this.router, this.serverConnection).getHtmlElement());
         },
       },
       {
         path: `${Pages.CHAT}`,
         callback: () => {
-          document.body.append(new ChatView(this.router).getHtmlElement());
+          document.body.append(new ChatView(this.router, this.serverConnection).getHtmlElement());
         },
       },
       {

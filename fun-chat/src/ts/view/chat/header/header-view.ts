@@ -3,15 +3,21 @@ import { label, div, h2, button } from '../../../util/tags';
 import View from '../../view';
 import Router from '../../../router/router';
 import Component from '../../../util/component';
+import ServerConnection from '../../../server-connection/server-connection';
+import { AuthRequest, Pages, RequestType } from '../../../util/types';
 
 export default class HeaderView extends View {
   private parentComponent: Component;
 
   private getInfoHandler: EventListener;
 
+  private exitBtnHandler: EventListener;
+
   private exitHandler: EventListener;
 
-  constructor(parentComponent: Component, router: Router) {
+  private errorHandler: EventListener;
+
+  constructor(parentComponent: Component, router: Router, serverConnection: ServerConnection, modalError: Component) {
     const params = {
       tag: 'header',
       className: 'header',
@@ -21,27 +27,64 @@ export default class HeaderView extends View {
     const routerRef = router;
     routerRef.handler.currentComponent = this.parentComponent;
     this.getInfoHandler = () => HeaderView.getInfo(router);
+    this.exitBtnHandler = () => HeaderView.exitBtn(serverConnection, modalError);
+    this.setContent(modalError);
     this.exitHandler = () => HeaderView.exit(router);
-    this.setContent();
+    this.errorHandler = (event) => HeaderView.showLogoutError(event, modalError);
+
+    this.parentComponent.getNode().addEventListener('LogoutError', this.errorHandler);
+    this.parentComponent.getNode().addEventListener('Logout', this.exitHandler);
   }
 
-  private setContent() {
+  private setContent(modalError: Component) {
+    const user = sessionStorage.getItem('loginVK');
+    if (!user) return;
+
     this.viewElementCreator.appendChildren([
-      div('header-wrapper', label('header-wrapper__user', 'User: '), h2('header-wrapper__title', 'Fun Chat')),
+      div(
+        'header-wrapper',
+        label('header-wrapper__user', `User: ${JSON.parse(user).login}`),
+        h2('header-wrapper__title', 'Fun Chat'),
+      ),
       div(
         'header-buttons',
         button('header-buttons__info', 'Info', this.getInfoHandler, 'button'),
-        button('header-buttons__exit', 'Exit', this.exitHandler, 'button'),
+        button('header-buttons__exit', 'Exit', this.exitBtnHandler, 'button'),
       ),
+      modalError,
     ]);
   }
 
-  public static getInfo(router: Router) {
-    router.navigate('about');
+  private static getInfo(router: Router) {
+    router.navigate(Pages.ABOUT);
   }
 
-  public static exit(router: Router) {
+  public static exitBtn(serverConnection: ServerConnection, modalError: Component) {
+    modalError.removeClass('modal__error_show');
+
+    const user = sessionStorage.getItem('loginVK');
+    if (!user) return;
+
+    const authRequest: AuthRequest = {
+      id: 'logout',
+      type: RequestType.USER_LOGOUT,
+      payload: {
+        user: JSON.parse(user),
+      },
+    };
+
+    serverConnection.sendRequest(JSON.stringify(authRequest));
+  }
+
+  private static exit(router: Router) {
     sessionStorage.removeItem('loginVK');
-    router.navigate('login');
+    router.navigate(Pages.LOGIN);
+  }
+
+  private static showLogoutError(event: Event, modalError: Component) {
+    if (!(event instanceof CustomEvent)) return;
+
+    modalError.setTextContent(event.detail);
+    modalError.addClass('modal__error_show');
   }
 }

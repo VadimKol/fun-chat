@@ -30,3 +30,25 @@
   }
   margin: 20px;
 }
+
+.modal__error {
+  display: none;
+  font-family: "Gagalin", sans-serif;
+  border: 1px solid var(--error-border);
+  background-color: var(--error-back);
+  border-radius: 6px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  padding: 50px 10px;
+  max-width: 300px;
+  max-height: min-content;
+  margin: auto;
+  box-sizing: border-box;
+  text-align: center;
+  &_show {
+    display: block;
+  }
+}

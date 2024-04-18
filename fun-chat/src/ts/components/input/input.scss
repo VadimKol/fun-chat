@@ -17,7 +17,10 @@
         background-color: var(--btn-back-hover);
     }
   } */
-    &:focus {
-      border: 1px solid black;
-    }
+  &:focus {
+    border: 1px solid black;
+  }
+  &_valid {
+    border: 1px solid greenyellow;
+  }
 }

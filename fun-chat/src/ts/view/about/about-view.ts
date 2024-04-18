@@ -22,7 +22,7 @@ export default class AboutView extends View {
   private setContent() {
     this.viewElementCreator.appendChildren([
       h2('about__title', 'Fun Chat'),
-      p('about__description', 'Application for chatting between multiple users developed in RSSchool JS/FE 2023Q4'),
+      p('about__description', 'Application for chatting developed in RSSchool JS/FE 2023Q4'),
       a('about__author', 'author Vadim Kolymbet', 'https://github.com/VadimKol'),
       button('about__back', 'Get back', this.backHandler, 'button'),
     ]);

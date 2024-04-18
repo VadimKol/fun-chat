@@ -23,41 +23,31 @@ export default class HistoryRouterHandler {
   }
 
   public navigate(url: string | null) {
-    const currentView = this.currentComponent.getNode().classList[0];
-
     if (typeof url === 'string') HistoryRouterHandler.setHistory(url);
 
-    if (window.location.hash !== '') {
-      if (currentView === 'login-form') HistoryRouterHandler.setHistory(Pages.LOGIN);
-      if (currentView === 'chat') HistoryRouterHandler.setHistory(Pages.CHAT);
-      return;
-    }
-
-    const path = window.location.pathname.split('/').pop();
+    let path = window.location.pathname.split('/').pop();
     if (!path) {
-      const where = sessionStorage.getItem('loginVK') !== null ? Pages.CHAT : Pages.LOGIN;
-      HistoryRouterHandler.setHistory(where);
-      return;
+      path = sessionStorage.getItem('loginVK') !== null ? Pages.CHAT : Pages.LOGIN;
+      HistoryRouterHandler.setHistory(path);
     }
 
     // редирект на логин, если неавторизованный вводит chat
-    if (path === Pages.CHAT && currentView === 'login-form' && sessionStorage.getItem('loginVK') === null) {
-      HistoryRouterHandler.setHistory(Pages.LOGIN);
-      return;
+    if (path === Pages.CHAT && sessionStorage.getItem('loginVK') === null) {
+      path = Pages.LOGIN;
+      HistoryRouterHandler.setHistory(path);
     }
 
     // редирект на чат, если авторизованный вводит login
-    if (path === Pages.LOGIN && currentView === 'chat' && sessionStorage.getItem('loginVK') !== null) {
-      HistoryRouterHandler.setHistory(Pages.CHAT);
-      return;
+    if (path === Pages.LOGIN && sessionStorage.getItem('loginVK') !== null) {
+      path = Pages.CHAT;
+      HistoryRouterHandler.setHistory(path);
     }
 
     // редирект в зависимости от авторизации
     // если вводит что-то не то
     if (!(path === Pages.CHAT || path === Pages.LOGIN || path === Pages.ABOUT)) {
-      if (currentView === 'login-form') HistoryRouterHandler.setHistory(Pages.LOGIN);
-      if (currentView === 'chat') HistoryRouterHandler.setHistory(Pages.CHAT);
-      return;
+      path = sessionStorage.getItem('loginVK') !== null ? Pages.CHAT : Pages.LOGIN;
+      HistoryRouterHandler.setHistory(path);
     }
 
     this.currentComponent.destroy();

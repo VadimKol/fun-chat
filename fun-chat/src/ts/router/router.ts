@@ -8,7 +8,9 @@ export default class Router {
 
   private startHandler: EventListener;
 
-  constructor(routes: Route[]) {
+  public bodyHander: EventListener;
+
+  constructor(routes: Route[], bodyHandler: EventListener) {
     this.routes = routes;
 
     this.handler = new HistoryRouterHandler(this.urlChangedHandler.bind(this));
@@ -16,8 +18,7 @@ export default class Router {
     this.startHandler = () => this.handler.navigate(null);
     window.addEventListener('DOMContentLoaded', this.startHandler);
 
-    const blockBFCache = () => {};
-    window.addEventListener('unload', blockBFCache);
+    this.bodyHander = bodyHandler;
   }
 
   public navigate(url: string) {
