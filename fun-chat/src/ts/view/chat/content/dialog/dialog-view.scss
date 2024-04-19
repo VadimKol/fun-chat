@@ -4,6 +4,16 @@
     display: flex;
     justify-content: space-around;
     margin-bottom: 10px;
+    opacity: 0;
+    &_show {
+      opacity: 1;
+    }
+    &__status {
+      color: greenyellow;
+      &_offline {
+        color: red;
+      }
+    }
   }
   &-content {
     height: 57vh;

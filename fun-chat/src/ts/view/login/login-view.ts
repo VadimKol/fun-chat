@@ -29,8 +29,6 @@ export default class LoginView extends View {
 
   private getInfoHandler: EventListener;
 
-  private errorHandler: EventListener;
-
   private user: RequestUser | null;
 
   constructor(router: Router, serverConnection: ServerConnection) {
@@ -52,13 +50,12 @@ export default class LoginView extends View {
     this.getInfoHandler = () => this.getInfo(router);
     this.setContent();
     this.enterKeyHandler = (event) => this.enterKey(event, serverConnection);
-    this.errorHandler = (event) => this.showLoginError(event);
     this.enterHandler = () => this.enter(router);
     this.user = null;
 
     document.addEventListener('keyup', this.enterKeyHandler);
     document.body.removeEventListener('LoginError', router.bodyHander);
-    this.getComponent().getNode().addEventListener('LoginError', this.errorHandler);
+    this.getComponent().getNode().addEventListener('LoginError', this.showLoginError.bind(this));
     this.getComponent().getNode().addEventListener('Login', this.enterHandler);
   }
 

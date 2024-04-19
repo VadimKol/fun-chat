@@ -7,8 +7,6 @@ import ServerConnection from '../../../server-connection/server-connection';
 import { AuthRequest, Pages, RequestType } from '../../../util/types';
 
 export default class HeaderView extends View {
-  private parentComponent: Component;
-
   private getInfoHandler: EventListener;
 
   private exitBtnHandler: EventListener;
@@ -23,17 +21,16 @@ export default class HeaderView extends View {
       className: 'header',
     };
     super(params);
-    this.parentComponent = parentComponent;
     const routerRef = router;
-    routerRef.handler.currentComponent = this.parentComponent;
+    routerRef.handler.currentComponent = parentComponent;
     this.getInfoHandler = () => HeaderView.getInfo(router);
     this.exitBtnHandler = () => HeaderView.exitBtn(serverConnection, modalError);
     this.setContent(modalError);
     this.exitHandler = () => HeaderView.exit(router);
     this.errorHandler = (event) => HeaderView.showLogoutError(event, modalError);
 
-    this.parentComponent.getNode().addEventListener('LogoutError', this.errorHandler);
-    this.parentComponent.getNode().addEventListener('Logout', this.exitHandler);
+    parentComponent.getNode().addEventListener('LogoutError', this.errorHandler);
+    parentComponent.getNode().addEventListener('Logout', this.exitHandler);
   }
 
   private setContent(modalError: Component) {
@@ -77,6 +74,8 @@ export default class HeaderView extends View {
   }
 
   private static exit(router: Router) {
+    const routerRef = router;
+    routerRef.lastRecipient = { login: '', online: true };
     sessionStorage.removeItem('loginVK');
     router.navigate(Pages.LOGIN);
   }

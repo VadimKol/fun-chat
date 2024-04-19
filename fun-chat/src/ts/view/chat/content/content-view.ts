@@ -2,20 +2,23 @@ import './content-view.scss';
 import View from '../../view';
 import ContactsView from './contacts/contacts-view';
 import DialogView from './dialog/dialog-view';
+import ServerConnection from '../../../server-connection/server-connection';
+import Router from '../../../router/router';
+import Component from '../../../util/component';
 
 export default class ContentView extends View {
-  constructor() {
+  constructor(serverConnection: ServerConnection, router: Router, modalError: Component) {
     const params = {
       tag: 'section',
       className: 'content',
     };
     super(params);
-    this.setContent();
+    this.setContent(serverConnection, router, modalError);
   }
 
-  setContent() {
-    const contacts = new ContactsView();
-    const dialog = new DialogView();
+  setContent(serverConnection: ServerConnection, router: Router, modalError: Component) {
+    const contacts = new ContactsView(serverConnection, router, modalError);
+    const dialog = new DialogView(this.getComponent(), serverConnection, router);
     this.viewElementCreator.appendChildren([contacts.getComponent(), dialog.getComponent()]);
   }
 }

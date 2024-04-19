@@ -22,7 +22,7 @@ export default class ChatView extends View {
 
   private setContent(router: Router, serverConnection: ServerConnection) {
     const header = new HeaderView(this.getComponent(), router, serverConnection, this.modalError);
-    const content = new ContentView();
+    const content = new ContentView(serverConnection, router, this.modalError);
     const footer = new FooterView();
     this.viewElementCreator.appendChildren([header.getComponent(), content.getComponent(), footer.getComponent()]);
   }

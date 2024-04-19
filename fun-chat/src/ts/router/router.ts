@@ -1,4 +1,4 @@
-import { Route } from '../util/types';
+import { Route, UserFromContacts } from '../util/types';
 import HistoryRouterHandler from './history-router-handler';
 
 export default class Router {
@@ -10,6 +10,10 @@ export default class Router {
 
   public bodyHander: EventListener;
 
+  public isFirstContactsRender: boolean;
+
+  public lastRecipient: UserFromContacts;
+
   constructor(routes: Route[], bodyHandler: EventListener) {
     this.routes = routes;
 
@@ -19,6 +23,10 @@ export default class Router {
     window.addEventListener('DOMContentLoaded', this.startHandler);
 
     this.bodyHander = bodyHandler;
+
+    this.isFirstContactsRender = true;
+
+    this.lastRecipient = { login: '', online: true };
   }
 
   public navigate(url: string) {

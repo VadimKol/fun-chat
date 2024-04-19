@@ -1,15 +1,3 @@
-export interface Car {
-  name: string;
-  color: string;
-  id: number;
-}
-
-export interface Winner {
-  id: number;
-  wins: number;
-  time: number;
-}
-
 export enum Pages {
   LOGIN = 'login',
   CHAT = 'chat',
@@ -53,6 +41,15 @@ export enum RequestType {
   ERROR = 'ERROR',
   USER_LOGIN = 'USER_LOGIN',
   USER_LOGOUT = 'USER_LOGOUT',
+  USER_ACTIVE = 'USER_ACTIVE',
+  USER_INACTIVE = 'USER_INACTIVE',
+  USER_EXTERNAL_LOGIN = 'USER_EXTERNAL_LOGIN',
+  USER_EXTERNAL_LOGOUT = 'USER_EXTERNAL_LOGOUT',
+}
+
+export interface UserFromContacts {
+  login: string;
+  online: boolean;
 }
 
 interface BaseWSFormat {
@@ -83,6 +80,16 @@ export interface AuthRequest extends BaseWSFormat {
 export interface AuthResponse extends BaseWSFormat {
   payload: {
     user: ResponseUser;
+  };
+}
+
+export interface ContactsRequest extends BaseWSFormat {
+  payload: null;
+}
+
+export interface ContactsResponse extends BaseWSFormat {
+  payload: {
+    users: ResponseUser[];
   };
 }
 
