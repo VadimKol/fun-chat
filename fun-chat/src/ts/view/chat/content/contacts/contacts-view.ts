@@ -47,7 +47,6 @@ export default class ContactsView extends View {
     ]);
   }
 
-  // поправить все методы, если только event
   public searchUser(event: Event) {
     if (!(event instanceof KeyboardEvent)) return;
 

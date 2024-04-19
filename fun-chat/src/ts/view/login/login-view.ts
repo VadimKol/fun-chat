@@ -173,6 +173,8 @@ export default class LoginView extends View {
   private enter(router: Router) {
     document.removeEventListener('keyup', this.enterKeyHandler);
     sessionStorage.setItem('loginVK', JSON.stringify(this.user));
+    const routerRef = router;
+    routerRef.isFirstContactsRender = false;
     router.navigate(Pages.CHAT);
   }
 }
