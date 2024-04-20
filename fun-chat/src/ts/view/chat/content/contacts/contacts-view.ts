@@ -88,14 +88,24 @@ export default class ContactsView extends View {
   private updateUserStatus(event: Event) {
     if (!(event instanceof CustomEvent)) return;
 
+    let newUser = true;
+
     const user: ResponseUser = event.detail;
 
     this.users.forEach((el) => {
       if (el.login === user.login) {
         const recipient = el;
         recipient.online = user.isLogined;
+        newUser = false;
       }
     });
+
+    if (newUser) {
+      this.users.push({
+        login: user.login,
+        online: user.isLogined,
+      });
+    }
 
     this.showUsers(this.users);
   }
@@ -105,7 +115,8 @@ export default class ContactsView extends View {
 
     const status = event.type === 'ActiveUsers';
 
-    if (status) this.users.length = 0;
+    // !!не уверен
+    // if (status) this.users.length = 0;
 
     event.detail.forEach((user: ResponseUser) => {
       this.users.push({

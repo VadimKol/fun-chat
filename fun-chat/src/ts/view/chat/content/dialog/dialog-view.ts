@@ -42,6 +42,8 @@ export default class DialogView extends View {
 
   private updateMessageStatusHandler: EventListener;
 
+  private loadHistoryHandler: EventListener;
+
   private messages: RecipientWithMessages[];
 
   constructor(parentComponent: Component, serverConnection: ServerConnection, router: Router, modalError: Component) {
@@ -79,6 +81,7 @@ export default class DialogView extends View {
     this.addExternalMessageHandler = (event) => this.addExternalMessage(event, router);
     this.requestToRefreshDialogHandler = (event) => DialogView.requestToRefreshDialog(event, serverConnection);
     this.updateMessageStatusHandler = (event) => this.updateMessageStatus(event, router);
+    this.loadHistoryHandler = (event) => this.loadHistory(event, router);
 
     parentComponent.getNode().addEventListener('Chat', this.chatHandler);
 
@@ -95,7 +98,7 @@ export default class DialogView extends View {
       .getNode()
       .addEventListener('ReceiveExternalMessage', this.addExternalMessageHandler);
     router.handler.currentComponent.getNode().addEventListener('GetHistoryError', this.errorHandler);
-    router.handler.currentComponent.getNode().addEventListener('GetHistory', this.loadHistory.bind(this));
+    router.handler.currentComponent.getNode().addEventListener('GetHistory', this.loadHistoryHandler);
     router.handler.currentComponent.getNode().addEventListener('MessageDelivered', this.updateMessageStatusHandler);
   }
 
@@ -146,7 +149,7 @@ export default class DialogView extends View {
     routerRef.lastRecipient = user;
     this.sendBtn.removeClass('disabled');
 
-    console.log(user);
+    // console.log(user);
 
     const recipient: RecipientWithMessages | undefined = this.messages.find((el) => el.login === user.login);
     this.showMessages(recipient, router);
@@ -225,7 +228,7 @@ export default class DialogView extends View {
 
     // console.log(this.messages);
     // console.log(recipient, router);
-    this.showMessages(recipient, router);
+    if (recipient.login === router.lastRecipient.login) this.showMessages(recipient, router);
   }
 
   private showMessages(recipient: RecipientWithMessages | undefined, router: Router) {
@@ -293,7 +296,7 @@ export default class DialogView extends View {
     });
   }
 
-  private loadHistory(event: Event) {
+  private loadHistory(event: Event, router: Router) {
     if (!(event instanceof CustomEvent)) return;
 
     const user = sessionStorage.getItem('loginVK');
@@ -310,6 +313,7 @@ export default class DialogView extends View {
       event.detail.forEach((message: MessageOutcome) => recipient.messages.push(message));
 
       this.messages.push(recipient);
+      if (recipient.login === router.lastRecipient.login) this.showMessages(recipient, router);
     }
     // console.log(this.messages);
   }
