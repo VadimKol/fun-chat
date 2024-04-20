@@ -149,10 +149,9 @@ export default class DialogView extends View {
     routerRef.lastRecipient = user;
     this.sendBtn.removeClass('disabled');
 
-    // console.log(user);
-
     const recipient: RecipientWithMessages | undefined = this.messages.find((el) => el.login === user.login);
-    this.showMessages(recipient, router);
+    if (recipient) this.showMessages(recipient, router);
+    else this.dialogContent.destroyChildren();
   }
 
   private refreshStatusAndChat(event: Event, router: Router) {
@@ -168,7 +167,7 @@ export default class DialogView extends View {
       else this.recipientStatus.addClass('dialog-recipient__status_offline');
     }
 
-    // !!!!!!
+    // !!
     // this.messages.length = 0;
   }
 
@@ -188,8 +187,6 @@ export default class DialogView extends View {
       (el) => el.login === router.lastRecipient.login,
     );
 
-    // console.log(recipient, this.messages);
-
     if (recipient) {
       recipient.messages.push(message);
     } else {
@@ -198,8 +195,6 @@ export default class DialogView extends View {
       this.messages.push(recipient);
     }
 
-    // console.log(this.messages);
-    // console.log(recipient, router);
     this.showMessages(recipient, router);
   }
 
@@ -216,8 +211,6 @@ export default class DialogView extends View {
 
     let recipient: RecipientWithMessages | undefined = this.messages.find((el) => el.login === who);
 
-    // console.log(recipient, this.messages);
-
     if (recipient) {
       recipient.messages.push(message);
     } else {
@@ -226,43 +219,40 @@ export default class DialogView extends View {
       this.messages.push(recipient);
     }
 
-    // console.log(this.messages);
-    // console.log(recipient, router);
-    if (recipient.login === router.lastRecipient.login) this.showMessages(recipient, router);
+    this.showMessages(recipient, router);
   }
 
-  private showMessages(recipient: RecipientWithMessages | undefined, router: Router) {
+  private showMessages(recipient: RecipientWithMessages, router: Router) {
+    if (recipient.login !== router.lastRecipient.login) return;
+
     this.dialogContent.destroyChildren();
-    if (!recipient) return;
-    if (recipient.login === router.lastRecipient.login) {
-      const user = sessionStorage.getItem('loginVK');
-      if (!user) return;
-      const self: string = JSON.parse(user).login;
+    const user = sessionStorage.getItem('loginVK');
+    if (!user) return;
+    const self: string = JSON.parse(user).login;
 
-      recipient.messages.forEach((message) => {
-        let status: string = '';
-        if (message.status.isDelivered) {
-          status = 'delivered';
-          if (message.status.isReaded) {
-            status = 'readed';
-            if (message.status.isEdited) status = 'edited';
-          }
-        } else status = 'sended';
+    recipient.messages.forEach((message) => {
+      let status: string = '';
+      if (message.status.isDelivered) {
+        status = 'delivered';
+        if (message.status.isReaded) {
+          status = 'readed';
+          if (message.status.isEdited) status = 'edited';
+        }
+      } else status = 'sended';
 
-        const messageItem = div(
-          'msg',
-          div(
-            'msg-header',
-            label('msg-header__who', `${message.from === self ? 'you' : message.from}`),
-            label('msg-header__date', `${DialogView.formatDate(new Date(message.datetime))}`),
-          ),
-          p('msg__text', `${message.text}`),
-          label('msg__status', `${status}`),
-        );
-        if (message.from === self) messageItem.addClass('msg_self');
-        this.dialogContent.append(messageItem);
-      });
-    }
+      const messageItem = div(
+        'msg',
+        div(
+          'msg-header',
+          label('msg-header__who', `${message.from === self ? 'you' : message.from}`),
+          label('msg-header__date', `${DialogView.formatDate(new Date(message.datetime))}`),
+        ),
+        p('msg__text', `${message.text}`),
+        label('msg__status', `${status}`),
+      );
+      if (message.from === self) messageItem.addClass('msg_self');
+      this.dialogContent.append(messageItem);
+    });
   }
 
   public static formatDate(date: Date): string {
@@ -313,17 +303,15 @@ export default class DialogView extends View {
       event.detail.forEach((message: MessageOutcome) => recipient.messages.push(message));
 
       this.messages.push(recipient);
-      if (recipient.login === router.lastRecipient.login) this.showMessages(recipient, router);
+      // здесь это нужно, когда из about возвращаются и выбран юзер
+      this.showMessages(recipient, router);
     }
-    // console.log(this.messages);
   }
 
   private updateMessageStatus(event: Event, router: Router) {
     if (!(event instanceof CustomEvent)) return;
 
     const messageInfo: DeliveredMsg = event.detail;
-
-    // console.log(messageInfo, this.messages);
 
     const recipient: RecipientWithMessages | undefined = this.messages.find((user) =>
       user.messages.find((message) => message.id === messageInfo.id),
