@@ -44,6 +44,8 @@ export default class DialogView extends View {
 
   private loadHistoryHandler: EventListener;
 
+  private keyEnterHandler: EventListener;
+
   private messages: RecipientWithMessages[];
 
   constructor(parentComponent: Component, serverConnection: ServerConnection, router: Router, modalError: Component) {
@@ -54,12 +56,12 @@ export default class DialogView extends View {
     super(params);
     this.messages = [];
     this.sendMsgHandler = () => this.sendMsg(router, serverConnection);
-    this.messageInput = input('dialog-msg-box__msg', () => {}, 'text', 'Message...');
+    this.keyEnterHandler = (event) => this.keyEnter(event, router, serverConnection);
+    this.messageInput = input('dialog-msg-box__msg', this.keyEnterHandler, 'text', 'Message...');
     this.sendBtn = button('send', 'Send', this.sendMsgHandler, 'button');
+    this.sendBtn.addClass('disabled');
     this.errorHandler = (event) => DialogView.showError(event, modalError);
     this.dialogContent = div('dialog-content');
-
-    if (router.lastRecipient.login === '') this.sendBtn.addClass('disabled');
 
     this.chatHandler = (event) => this.chat(event, router);
     this.refreshStatusAndChatHandler = (event) => this.refreshStatusAndChat(event, router);
@@ -75,6 +77,8 @@ export default class DialogView extends View {
     if (router.lastRecipient.login !== '') {
       const dialogRecipient = this.getComponent().getChildren()[0];
       if (dialogRecipient) dialogRecipient.addClass('dialog-recipient_show');
+
+      this.messageInput.addClass('dialog-msg-box__msg_show');
     }
 
     this.addSelfMessageHandler = (event) => this.addSelfMessage(event, router);
@@ -110,12 +114,26 @@ export default class DialogView extends View {
     ]);
   }
 
+  private keyEnter(event: Event, router: Router, serverConnection: ServerConnection) {
+    if (!(event instanceof KeyboardEvent)) return;
+
+    const { target } = event;
+
+    if (!(target instanceof HTMLInputElement)) return;
+
+    if (target.value.length > 0) this.sendBtn.removeClass('disabled');
+    else this.sendBtn.addClass('disabled');
+
+    if (event.key === 'Enter' && !this.sendBtn.hasClass('disabled')) this.sendMsg(router, serverConnection);
+  }
+
   private sendMsg(router: Router, serverConnection: ServerConnection) {
     const messageBox = this.messageInput.getNode();
     if (!(messageBox instanceof HTMLInputElement)) return;
     const message = messageBox.value;
     const recipient = router.lastRecipient.login;
     messageBox.value = '';
+    this.sendBtn.addClass('disabled');
 
     const messageRequest: MessageRequest = {
       id: 'msg-send',
@@ -147,7 +165,7 @@ export default class DialogView extends View {
 
     const routerRef = router;
     routerRef.lastRecipient = user;
-    this.sendBtn.removeClass('disabled');
+    this.messageInput.addClass('dialog-msg-box__msg_show');
 
     const recipient: RecipientWithMessages | undefined = this.messages.find((el) => el.login === user.login);
     if (recipient) this.showMessages(recipient, router);
