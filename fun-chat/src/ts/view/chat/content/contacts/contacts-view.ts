@@ -11,7 +11,11 @@ export default class ContactsView extends View {
 
   private errorHandler: EventListener;
 
-  private users: UserFromContacts[];
+  private addUsersHandler: EventListener;
+
+  private updateUserStatusHandler: EventListener;
+
+  public users: UserFromContacts[];
 
   private userList: Component;
 
@@ -23,19 +27,24 @@ export default class ContactsView extends View {
     super(params);
     this.users = [];
     this.requestToRefreshContactsHandler = () => this.requestToRefreshContacts(serverConnection, router);
+    this.updateUserStatusHandler = (event) => this.updateUserStatus(event);
+    this.addUsersHandler = (event) => this.addUsers(event, router);
     this.errorHandler = (event) => ContactsView.showError(event, modalError);
     const routerRef = router;
     this.userList = ul('contacts-users');
     this.setContent();
 
-    if (!router.isFirstContactsRender) this.requestToRefreshContacts(serverConnection, router);
+    if (!router.isFirstRender) this.requestToRefreshContacts(serverConnection, router);
 
     serverConnection.connection.addEventListener('open', this.requestToRefreshContactsHandler);
 
     routerRef.handler.currentComponent.getNode().addEventListener('ActiveContactsError', this.errorHandler);
     routerRef.handler.currentComponent.getNode().addEventListener('InactiveContactsError', this.errorHandler);
-    routerRef.handler.currentComponent.getNode().addEventListener('ActiveUsers', this.addUsers.bind(this));
-    routerRef.handler.currentComponent.getNode().addEventListener('InactiveUsers', this.addUsers.bind(this));
+    routerRef.handler.currentComponent.getNode().addEventListener('ActiveUsers', this.addUsersHandler);
+    routerRef.handler.currentComponent.getNode().addEventListener('InactiveUsers', this.addUsersHandler);
+
+    routerRef.handler.currentComponent.getNode().addEventListener('ExternalLogin', this.updateUserStatusHandler);
+    routerRef.handler.currentComponent.getNode().addEventListener('ExternalLogout', this.updateUserStatusHandler);
 
     this.userList.addListener('click', ContactsView.clickOnUser.bind(this));
   }
@@ -60,7 +69,7 @@ export default class ContactsView extends View {
 
   private requestToRefreshContacts(serverConnection: ServerConnection, router: Router) {
     const routerRef = router;
-    routerRef.isFirstContactsRender = false;
+    routerRef.isFirstRender = false;
     serverConnection.connection.removeEventListener('open', this.requestToRefreshContactsHandler);
     const activeRequest: ContactsRequest = {
       id: 'get_active_users',
@@ -76,7 +85,22 @@ export default class ContactsView extends View {
     serverConnection.sendRequest(JSON.stringify(inactiveRequest));
   }
 
-  private addUsers(event: Event) {
+  private updateUserStatus(event: Event) {
+    if (!(event instanceof CustomEvent)) return;
+
+    const user: ResponseUser = event.detail;
+
+    this.users.forEach((el) => {
+      if (el.login === user.login) {
+        const recipient = el;
+        recipient.online = user.isLogined;
+      }
+    });
+
+    this.showUsers(this.users);
+  }
+
+  private addUsers(event: Event, router: Router) {
     if (!(event instanceof CustomEvent)) return;
 
     const status = event.type === 'ActiveUsers';
@@ -94,6 +118,14 @@ export default class ContactsView extends View {
     if (!user) return;
     const currentUser: string = JSON.parse(user).login;
     this.users = this.users.filter((el) => el.login !== currentUser);
+
+    if (!status)
+      router.handler.currentComponent.getNode().dispatchEvent(
+        new CustomEvent('GetHistoryUsers', {
+          detail: this.users,
+          bubbles: true,
+        }),
+      );
 
     this.showUsers(this.users);
   }
@@ -131,7 +163,6 @@ export default class ContactsView extends View {
     if (!login) return;
     const user: UserFromContacts = { login, online: target.classList.contains('contacts-users__user_online') };
 
-    // на content надо ловить это событие
     target.dispatchEvent(
       new CustomEvent('Chat', {
         detail: user,

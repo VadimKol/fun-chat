@@ -18,7 +18,7 @@ export default class ContentView extends View {
 
   setContent(serverConnection: ServerConnection, router: Router, modalError: Component) {
     const contacts = new ContactsView(serverConnection, router, modalError);
-    const dialog = new DialogView(this.getComponent(), serverConnection, router);
+    const dialog = new DialogView(this.getComponent(), serverConnection, router, modalError);
     this.viewElementCreator.appendChildren([contacts.getComponent(), dialog.getComponent()]);
   }
 }

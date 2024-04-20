@@ -45,6 +45,9 @@ export enum RequestType {
   USER_INACTIVE = 'USER_INACTIVE',
   USER_EXTERNAL_LOGIN = 'USER_EXTERNAL_LOGIN',
   USER_EXTERNAL_LOGOUT = 'USER_EXTERNAL_LOGOUT',
+  MSG_SEND = 'MSG_SEND',
+  MSG_FROM_USER = 'MSG_FROM_USER',
+  MSG_DELIVER = 'MSG_DELIVER',
 }
 
 export interface UserFromContacts {
@@ -67,6 +70,40 @@ export interface ResponseUser {
   isLogined: boolean;
 }
 
+export interface MessageIncome {
+  to: string;
+  text: string;
+}
+
+export interface Status {
+  isDelivered?: boolean;
+  isReaded?: boolean;
+  isEdited?: boolean;
+}
+
+export interface MessageOutcome {
+  id: string;
+  from: string;
+  to: string;
+  text: string;
+  datetime: number;
+  status: Status;
+}
+
+export interface RecipientWithMessages {
+  login: string;
+  messages: MessageOutcome[];
+}
+
+export interface DeliveredMsg {
+  id: string;
+  status: Status;
+}
+
+export interface LoginToGetHistory {
+  login: string;
+}
+
 export interface WsError {
   error: string;
 }
@@ -83,6 +120,30 @@ export interface AuthResponse extends BaseWSFormat {
   };
 }
 
+export interface MessageRequest extends BaseWSFormat {
+  payload: {
+    message: MessageIncome;
+  };
+}
+
+export interface MessageResponse extends BaseWSFormat {
+  payload: {
+    message: MessageOutcome;
+  };
+}
+
+export interface HistoryRequest extends BaseWSFormat {
+  payload: {
+    user: LoginToGetHistory;
+  };
+}
+
+export interface HistoryResponse extends BaseWSFormat {
+  payload: {
+    messages: MessageOutcome[];
+  };
+}
+
 export interface ContactsRequest extends BaseWSFormat {
   payload: null;
 }
@@ -90,6 +151,12 @@ export interface ContactsRequest extends BaseWSFormat {
 export interface ContactsResponse extends BaseWSFormat {
   payload: {
     users: ResponseUser[];
+  };
+}
+
+export interface DeliveredMsgResponse extends BaseWSFormat {
+  payload: {
+    message: DeliveredMsg;
   };
 }
 

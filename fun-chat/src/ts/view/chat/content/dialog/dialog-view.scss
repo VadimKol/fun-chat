@@ -22,8 +22,56 @@
     border-radius: 6px;
     background-color: wheat;
     margin-bottom: 15px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    &::-webkit-scrollbar {
+      width: 10px;
+    }
+    &::-webkit-scrollbar-track {
+      box-shadow: inset 0 0 5px burlywood;
+      border-radius: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+      border-radius: 5px;
+      background-color: darkgray;
+      border: 2px solid burlywood;
+    }
+    &::-webkit-scrollbar-corner {
+      background-color: transparent;
+    }
     @media screen and (max-width: 800px) {
       height: 54vh;
+    }
+    & .msg {
+      border: 1px solid darkgray;
+      border-radius: 6px;
+      width: 60%;
+      height: min-content;
+      align-self: flex-start;
+      background-color: antiquewhite;
+      margin-bottom: 15px;
+      &_self {
+        align-self: flex-end;
+        background-color: beige;
+      }
+      &-header {
+        display: flex;
+        justify-content: space-around;
+        margin: 10px 0;
+      }
+      &__text {
+        background-color: rgba(169, 169, 169, 0.3);
+        padding: 10px;
+        margin: 10px;
+        border-radius: 6px;
+      }
+      &__status {
+        text-align: end;
+        display: block;
+        margin: 10px;
+      }
     }
   }
   &-msg-box {

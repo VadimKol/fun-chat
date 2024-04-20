@@ -10,7 +10,7 @@ export default class Router {
 
   public bodyHander: EventListener;
 
-  public isFirstContactsRender: boolean;
+  public isFirstRender: boolean;
 
   public lastRecipient: UserFromContacts;
 
@@ -24,7 +24,7 @@ export default class Router {
 
     this.bodyHander = bodyHandler;
 
-    this.isFirstContactsRender = true;
+    this.isFirstRender = true;
 
     this.lastRecipient = { login: '', online: true };
   }
