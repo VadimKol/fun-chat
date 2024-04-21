@@ -512,6 +512,7 @@ export default class DialogView extends View {
       // здесь это нужно, когда из about возвращаются и выбран юзер
       this.showMessages(recipient, router);
       DialogView.showUnread(recipient, parentComponent);
+      this.scrollToMsg(recipient);
     }
   }
 
