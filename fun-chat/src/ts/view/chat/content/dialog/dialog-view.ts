@@ -241,8 +241,13 @@ export default class DialogView extends View {
     this.messageInput.addClass('dialog-msg-box__msg_show');
 
     const recipient: RecipientWithMessages | undefined = this.messages.find((el) => el.login === user.login);
-    if (recipient) this.showMessages(recipient, router);
-    else this.dialogContent.destroyChildren();
+    if (recipient) {
+      this.showMessages(recipient, router);
+      this.dialogContent.removeClass('dialog-content_first');
+    } else {
+      this.dialogContent.destroyChildren();
+      this.dialogContent.addClass('dialog-content_first');
+    }
 
     this.scrollToMsg(recipient);
   }
@@ -510,10 +515,16 @@ export default class DialogView extends View {
 
       this.messages.push(recipient);
       // здесь это нужно, когда из about возвращаются и выбран юзер
+      this.dialogContent.removeClass('dialog-content_first');
       this.showMessages(recipient, router);
       DialogView.showUnread(recipient, parentComponent);
       this.scrollToMsg(recipient);
     }
+    if (
+      router.lastRecipient.login !== '' &&
+      !this.messages.some((message) => message.login === router.lastRecipient.login)
+    )
+      this.dialogContent.addClass('dialog-content_first');
   }
 
   private updateMessageStatus(event: Event, router: Router, parentComponent: Component, contactsView: ContactsView) {
