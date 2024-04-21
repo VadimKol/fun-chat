@@ -11,4 +11,19 @@
   @media screen and (max-width: 800px) {
     height: 7vh;
   }
+  &__logo {
+    width: 20px;
+    height: 20px;
+    background-image: url(../../../../assets/img/rs.webp);
+    background-size: 100% 100%;
+  }
+  &__author {
+    text-decoration: none;
+    color: darkorchid;
+    @media (hover: hover) {
+      &:hover {
+          box-shadow: 0 2px 0 0 darkorchid;
+      }
+    }
+  }
 }

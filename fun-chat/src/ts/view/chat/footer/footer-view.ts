@@ -1,5 +1,5 @@
 import './footer-view.scss';
-import { label } from '../../../util/tags';
+import { a, div, label } from '../../../util/tags';
 import View from '../../view';
 
 export default class FooterView extends View {
@@ -14,8 +14,9 @@ export default class FooterView extends View {
 
   setContent() {
     this.viewElementCreator.appendChildren([
+      div('footer__logo'),
       label('footer__school', 'RSSchool'),
-      label('footer__author', 'Vadim Kolymbet'),
+      a('footer__author', 'Vadim Kolymbet', 'https://github.com/VadimKol'),
       label('footer__year', '2024'),
     ]);
   }
