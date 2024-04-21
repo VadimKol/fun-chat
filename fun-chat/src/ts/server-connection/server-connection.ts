@@ -6,7 +6,7 @@ import {
   ContactsResponse,
   MessageResponse,
   HistoryResponse,
-  DeliveredMsgResponse,
+  StatusMsgResponse,
 } from '../util/types';
 
 export default class ServerConnection {
@@ -32,6 +32,10 @@ export default class ServerConnection {
 
   private messageDeliveredHandler: EventListener;
 
+  private readSelfMessageHandler: EventListener;
+
+  private readExternalMessageHandler: EventListener;
+
   constructor(url: string, router: Router) {
     this.connection = new WebSocket(url);
 
@@ -45,6 +49,8 @@ export default class ServerConnection {
     this.recieveExternalMessageHandler = (event) => ServerConnection.recieveExternalMessage(event, router);
     this.getHistoryHandler = (event) => ServerConnection.getHistory(event, router);
     this.messageDeliveredHandler = (event) => ServerConnection.messageDelivered(event, router);
+    this.readSelfMessageHandler = (event) => ServerConnection.readSelfMessage(event, router);
+    this.readExternalMessageHandler = (event) => ServerConnection.readExternalMessage(event, router);
 
     this.connection.addEventListener('message', this.loginHandler);
     this.connection.addEventListener('message', this.logoutHandler);
@@ -56,6 +62,9 @@ export default class ServerConnection {
     this.connection.addEventListener('message', this.recieveExternalMessageHandler);
     this.connection.addEventListener('message', this.getHistoryHandler);
     this.connection.addEventListener('message', this.messageDeliveredHandler);
+
+    this.connection.addEventListener('message', this.readSelfMessageHandler);
+    this.connection.addEventListener('message', this.readExternalMessageHandler);
   }
 
   public sendRequest(user: string) {
@@ -255,16 +264,6 @@ export default class ServerConnection {
 
     if (!(response.id === null)) return;
 
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ReceiveMessageError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
     if (response.type === RequestType.MSG_SEND)
       if ('message' in response.payload)
         currentView.dispatchEvent(
@@ -313,7 +312,7 @@ export default class ServerConnection {
 
     if (!(event instanceof MessageEvent)) return;
 
-    const response: DeliveredMsgResponse = JSON.parse(event.data);
+    const response: StatusMsgResponse = JSON.parse(event.data);
 
     if (response.id !== null) return;
 
@@ -328,5 +327,57 @@ export default class ServerConnection {
 
       // console.log(`Данные получены с сервера: ${event.data}`);
     }
+  }
+
+  private static readSelfMessage(event: Event, router: Router) {
+    const currentView = router.handler.currentComponent.getNode();
+
+    if (!(event instanceof MessageEvent)) return;
+
+    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
+
+    if (!(response.id === 'msg-read')) return;
+
+    if (response.type === RequestType.ERROR) {
+      if ('error' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('ReadMessageError', {
+            detail: response.payload.error,
+            bubbles: true,
+          }),
+        );
+    }
+
+    if (response.type === RequestType.MSG_READ)
+      if ('message' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('ReadSelfMessage', {
+            detail: response.payload.message,
+            bubbles: true,
+          }),
+        );
+
+    // console.log(`Данные получены с сервера: ${event.data}`);
+  }
+
+  private static readExternalMessage(event: Event, router: Router) {
+    const currentView = router.handler.currentComponent.getNode();
+
+    if (!(event instanceof MessageEvent)) return;
+
+    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
+
+    if (!(response.id === null)) return;
+
+    if (response.type === RequestType.MSG_READ)
+      if ('message' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('ReadExternalMessage', {
+            detail: response.payload.message,
+            bubbles: true,
+          }),
+        );
+
+    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 }

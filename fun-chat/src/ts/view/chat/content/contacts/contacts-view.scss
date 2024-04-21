@@ -17,6 +17,28 @@
       position: relative;
       box-sizing: border-box;
       border-radius: 6px;
+      &_unread {
+        &::after {
+          content: attr(data-after);
+          display: block;
+          width: 20px;
+          height: 20px;
+          position: absolute;
+          top: 7px;
+          right: 25px;
+          box-sizing: border-box;
+          border: 1px solid darkgray;
+          border-radius: 100%;
+          background-color: greenyellow;
+          text-align: center;
+          padding: 1.4px;
+          @media screen and (max-width: 800px) {
+            top: 6px;
+            right: 0px;
+            padding: 3px;
+          }
+        }
+      }
       &_online,
       &_offline {
         &::before {
@@ -36,9 +58,6 @@
           }
         }
       }
-      @media screen and (max-width: 800px) {
-        padding: 10px 15px;
-      }
       &_online {
         &::before {
           background-color: greenyellow;
@@ -48,6 +67,9 @@
         &::before {
           background-color: tomato;
         }
+      }
+      @media screen and (max-width: 800px) {
+        padding: 10px 15px;
       }
       @media (hover: hover) {
         &:hover {

@@ -104,6 +104,7 @@ export default class ContactsView extends View {
       this.users.push({
         login: user.login,
         online: user.isLogined,
+        unread: 0,
       });
     }
 
@@ -122,6 +123,7 @@ export default class ContactsView extends View {
       this.users.push({
         login: user.login,
         online: status,
+        unread: 0,
       });
     });
 
@@ -155,6 +157,8 @@ export default class ContactsView extends View {
     users.forEach((user) => {
       const listItem = li('contacts-users__user', user.login);
       listItem.addClass(`contacts-users__user_${user.online ? 'online' : 'offline'}`);
+      if (user.unread > 0) listItem.addClass('contacts-users__user_unread');
+      listItem.setAttribute('data-after', `${user.unread}`);
       this.userList.append(listItem);
     });
   }
@@ -172,7 +176,11 @@ export default class ContactsView extends View {
 
     const login = target.textContent;
     if (!login) return;
-    const user: UserFromContacts = { login, online: target.classList.contains('contacts-users__user_online') };
+    const user: UserFromContacts = {
+      login,
+      online: target.classList.contains('contacts-users__user_online'),
+      unread: Number(target.getAttribute('data-after')),
+    };
 
     target.dispatchEvent(
       new CustomEvent('Chat', {

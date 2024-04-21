@@ -26,7 +26,7 @@ export default class Router {
 
     this.isFirstRender = true;
 
-    this.lastRecipient = { login: '', online: true };
+    this.lastRecipient = { login: '', online: true, unread: 0 };
   }
 
   public navigate(url: string) {

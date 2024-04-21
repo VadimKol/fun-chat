@@ -5,15 +5,17 @@ import ServerConnection from '../../../../server-connection/server-connection';
 import Router from '../../../../router/router';
 import Component from '../../../../util/component';
 import {
-  DeliveredMsg,
   HistoryRequest,
   MessageOutcome,
   MessageRequest,
+  ReadMsgRequest,
   RecipientWithMessages,
   RequestType,
   ResponseUser,
+  StatusMsg,
   UserFromContacts,
 } from '../../../../util/types';
+import ContactsView from '../contacts/contacts-view';
 
 export default class DialogView extends View {
   private messageInput: Component;
@@ -46,9 +48,23 @@ export default class DialogView extends View {
 
   private keyEnterHandler: EventListener;
 
+  private readMsgHandler: EventListener;
+
+  private OptimiseHandler: EventListener;
+
+  private userScrollHandler: EventListener;
+
   private messages: RecipientWithMessages[];
 
-  constructor(parentComponent: Component, serverConnection: ServerConnection, router: Router, modalError: Component) {
+  private isUserScroll: boolean;
+
+  constructor(
+    parentComponent: Component,
+    serverConnection: ServerConnection,
+    router: Router,
+    modalError: Component,
+    contactsView: ContactsView,
+  ) {
     const params = {
       tag: 'div',
       className: 'dialog',
@@ -66,7 +82,7 @@ export default class DialogView extends View {
     this.chatHandler = (event) => this.chat(event, router);
     this.refreshStatusAndChatHandler = (event) => this.refreshStatusAndChat(event, router);
 
-    this.recipientName = label('dialog-recipient__name', `User: ${router.lastRecipient.login}`);
+    this.recipientName = label('dialog-recipient__name', `${router.lastRecipient.login}`);
     this.recipientStatus = label('dialog-recipient__status', router.lastRecipient.online ? 'Online' : 'Offline');
 
     if (router.lastRecipient.online) this.recipientStatus.removeClass('dialog-recipient__status_offline');
@@ -81,11 +97,12 @@ export default class DialogView extends View {
       this.messageInput.addClass('dialog-msg-box__msg_show');
     }
 
-    this.addSelfMessageHandler = (event) => this.addSelfMessage(event, router);
-    this.addExternalMessageHandler = (event) => this.addExternalMessage(event, router);
+    this.addSelfMessageHandler = (event) => this.addSelfMessage(event, router, serverConnection);
+    this.addExternalMessageHandler = (event) => this.addExternalMessage(event, router, parentComponent, contactsView);
     this.requestToRefreshDialogHandler = (event) => DialogView.requestToRefreshDialog(event, serverConnection);
-    this.updateMessageStatusHandler = (event) => this.updateMessageStatus(event, router);
-    this.loadHistoryHandler = (event) => this.loadHistory(event, router);
+    this.updateMessageStatusHandler = (event) => this.updateMessageStatus(event, router, parentComponent, contactsView);
+    this.loadHistoryHandler = (event) => this.loadHistory(event, router, contactsView, parentComponent);
+    this.readMsgHandler = () => this.readMsg(router, serverConnection);
 
     parentComponent.getNode().addEventListener('Chat', this.chatHandler);
 
@@ -104,9 +121,34 @@ export default class DialogView extends View {
     router.handler.currentComponent.getNode().addEventListener('GetHistoryError', this.errorHandler);
     router.handler.currentComponent.getNode().addEventListener('GetHistory', this.loadHistoryHandler);
     router.handler.currentComponent.getNode().addEventListener('MessageDelivered', this.updateMessageStatusHandler);
+
+    router.handler.currentComponent.getNode().addEventListener('ReadMessageError', this.errorHandler);
+    router.handler.currentComponent.getNode().addEventListener('ReadSelfMessage', this.updateMessageStatusHandler);
+    router.handler.currentComponent.getNode().addEventListener('ReadExternalMessage', this.updateMessageStatusHandler);
+
+    this.dialogContent.getNode().addEventListener('click', this.readMsgHandler);
+
+    this.userScrollHandler = () => {
+      this.isUserScroll = true;
+    };
+
+    let ticking = false;
+    this.isUserScroll = true;
+    this.OptimiseHandler = () => {
+      if (this.isUserScroll)
+        if (!ticking) {
+          setTimeout(() => {
+            this.readMsg(router, serverConnection);
+            ticking = false;
+          }, 10);
+          ticking = true;
+        }
+    };
+    this.dialogContent.getNode().addEventListener('scroll', this.OptimiseHandler);
+    this.dialogContent.getNode().addEventListener('scrollend', this.userScrollHandler);
   }
 
-  setContent() {
+  private setContent() {
     this.viewElementCreator.appendChildren([
       div('dialog-recipient', this.recipientName, this.recipientStatus),
       this.dialogContent,
@@ -149,6 +191,37 @@ export default class DialogView extends View {
     serverConnection.sendRequest(JSON.stringify(messageRequest));
   }
 
+  private readMsg(router: Router, serverConnection: ServerConnection) {
+    if (router.lastRecipient.login === '') return;
+
+    const recipientWithUnreadMessages = this.messages.find(
+      (ricipient) => ricipient.login === router.lastRecipient.login,
+    );
+    if (!recipientWithUnreadMessages) return;
+
+    const user = sessionStorage.getItem('loginVK');
+    if (!user) return;
+    const self: string = JSON.parse(user).login;
+
+    const messages = recipientWithUnreadMessages.messages.filter(
+      (message) => !message.status.isReaded && message.to === self,
+    );
+
+    messages.forEach((message) => {
+      const messageRequest: ReadMsgRequest = {
+        id: 'msg-read',
+        type: RequestType.MSG_READ,
+        payload: {
+          message: {
+            id: message.id,
+          },
+        },
+      };
+
+      serverConnection.sendRequest(JSON.stringify(messageRequest));
+    });
+  }
+
   private chat(event: Event, router: Router) {
     if (!(event instanceof CustomEvent)) return;
 
@@ -157,7 +230,7 @@ export default class DialogView extends View {
     const dialogRecipient = this.getComponent().getChildren()[0];
     if (dialogRecipient) dialogRecipient.addClass('dialog-recipient_show');
 
-    this.recipientName.setTextContent(`User: ${user.login}`);
+    this.recipientName.setTextContent(`${user.login}`);
     this.recipientStatus.setTextContent(user.online ? 'Online' : 'Offline');
 
     if (user.online) this.recipientStatus.removeClass('dialog-recipient__status_offline');
@@ -170,6 +243,8 @@ export default class DialogView extends View {
     const recipient: RecipientWithMessages | undefined = this.messages.find((el) => el.login === user.login);
     if (recipient) this.showMessages(recipient, router);
     else this.dialogContent.destroyChildren();
+
+    this.scrollToMsg(recipient);
   }
 
   private refreshStatusAndChat(event: Event, router: Router) {
@@ -184,9 +259,6 @@ export default class DialogView extends View {
       if (user.isLogined) this.recipientStatus.removeClass('dialog-recipient__status_offline');
       else this.recipientStatus.addClass('dialog-recipient__status_offline');
     }
-
-    // !!
-    // this.messages.length = 0;
   }
 
   private static showError(event: Event, modalError: Component) {
@@ -196,7 +268,7 @@ export default class DialogView extends View {
     modalError.addClass('modal__error_show');
   }
 
-  private addSelfMessage(event: Event, router: Router) {
+  private addSelfMessage(event: Event, router: Router, serverConnection: ServerConnection) {
     if (!(event instanceof CustomEvent)) return;
 
     const message: MessageOutcome = event.detail;
@@ -208,15 +280,17 @@ export default class DialogView extends View {
     if (recipient) {
       recipient.messages.push(message);
     } else {
-      recipient = { login: router.lastRecipient.login, messages: [] };
+      recipient = { login: router.lastRecipient.login, messages: [], unread: 0 };
       recipient.messages.push(message);
       this.messages.push(recipient);
     }
 
     this.showMessages(recipient, router);
+    this.readMsg(router, serverConnection);
+    this.scrollToMsg(recipient);
   }
 
-  private addExternalMessage(event: Event, router: Router) {
+  private addExternalMessage(event: Event, router: Router, parentComponent: Component, contactsView: ContactsView) {
     if (!(event instanceof CustomEvent)) return;
 
     const message: MessageOutcome = event.detail;
@@ -231,13 +305,23 @@ export default class DialogView extends View {
 
     if (recipient) {
       recipient.messages.push(message);
+      recipient.unread += 1;
     } else {
-      recipient = { login: who, messages: [] };
+      recipient = { login: who, messages: [], unread: 1 };
       recipient.messages.push(message);
       this.messages.push(recipient);
     }
 
+    contactsView.users.forEach((el) => {
+      if (recipient && el.login === recipient.login) {
+        const elRef = el;
+        elRef.unread = recipient.unread;
+      }
+    });
+
     this.showMessages(recipient, router);
+    DialogView.showUnread(recipient, parentComponent);
+    this.scrollToMsg(recipient);
   }
 
   private showMessages(recipient: RecipientWithMessages, router: Router) {
@@ -248,6 +332,7 @@ export default class DialogView extends View {
     if (!user) return;
     const self: string = JSON.parse(user).login;
 
+    const firstUnreadedMsgId = DialogView.getFirstUnreadedMsgId(recipient.messages, self);
     recipient.messages.forEach((message) => {
       let status: string = '';
       if (message.status.isDelivered) {
@@ -269,8 +354,96 @@ export default class DialogView extends View {
         label('msg__status', `${status}`),
       );
       if (message.from === self) messageItem.addClass('msg_self');
+      messageItem.setAttribute('id', `${message.id}`);
+      if (firstUnreadedMsgId === message.id) messageItem.addClass('msg_divide');
       this.dialogContent.append(messageItem);
     });
+  }
+
+  private updateMessages(recipient: RecipientWithMessages, router: Router, event: CustomEvent) {
+    if (recipient.login !== router.lastRecipient.login) return;
+
+    /* const user = sessionStorage.getItem('loginVK');
+    if (!user) return;
+    const self: string = JSON.parse(user).login; */
+
+    // const firstUnreadedMsgId = DialogView.getFirstUnreadedMsgId(recipient.messages, self);
+    const messages = this.dialogContent.getChildren();
+    recipient.messages.forEach((message) => {
+      messages.forEach((el) => {
+        const id = el.getNode().getAttribute('id');
+        const status = el.getNode().lastElementChild;
+        if (status && id && id === message.id) {
+          if (message.status.isDelivered) {
+            status.textContent = 'delivered';
+            if (message.status.isReaded) {
+              status.textContent = 'readed';
+              if (message.status.isEdited) status.textContent = 'edited';
+            }
+          } else status.textContent = 'sended';
+          if (event.type === 'ReadSelfMessage') el.removeClass('msg_divide');
+          // if(firstUnreadedMsgId === message.id) messageItem.addClass('msg_divide');
+        }
+      });
+    });
+  }
+
+  private static showUnread(recipient: RecipientWithMessages, parentComponent: Component) {
+    const contacts = parentComponent.getChildren()[0];
+    if (!contacts) return;
+
+    const usersList = contacts.getChildren()[1];
+    if (!usersList) return;
+
+    const users = usersList.getChildren();
+
+    users.forEach((user) => {
+      if (user.getNode().textContent === recipient.login) {
+        user.setAttribute('data-after', `${recipient.unread}`);
+        if (recipient.unread > 0) user.addClass('contacts-users__user_unread');
+        else user.removeClass('contacts-users__user_unread');
+      }
+    });
+  }
+
+  private scrollToMsg(recipient: RecipientWithMessages | undefined) {
+    this.isUserScroll = false;
+    const user = sessionStorage.getItem('loginVK');
+    if (!user) return;
+    const self: string = JSON.parse(user).login;
+
+    const messages = this.dialogContent.getChildren();
+    const scrollMsgid = DialogView.getScrollMsgId(recipient ? [...recipient.messages] : [], self);
+    messages.forEach((message) => {
+      if (message.getNode().id === scrollMsgid)
+        message.getNode().scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  private static getFirstUnreadedMsgId(messages: MessageOutcome[], self: string): string {
+    let id = '';
+    messages.some((message) => {
+      if (message.from !== self && !message.status.isReaded) {
+        id = message.id;
+        return true;
+      }
+      return false;
+    });
+    return id;
+  }
+
+  private static getScrollMsgId(messages: MessageOutcome[], self: string): string {
+    let id = '';
+    if (messages.length > 0)
+      if (messages.some((message) => message.from !== self && !message.status.isReaded)) {
+        const firstUnreadMsg = messages.find((message) => message.from !== self && !message.status.isReaded);
+        if (firstUnreadMsg) id = firstUnreadMsg.id;
+      } else {
+        const lastReadMsg = messages.pop();
+        if (lastReadMsg) id = lastReadMsg.id;
+      }
+
+    return id;
   }
 
   public static formatDate(date: Date): string {
@@ -304,45 +477,77 @@ export default class DialogView extends View {
     });
   }
 
-  private loadHistory(event: Event, router: Router) {
+  private loadHistory(event: Event, router: Router, contactsView: ContactsView, parentComponent: Component) {
     if (!(event instanceof CustomEvent)) return;
 
     const user = sessionStorage.getItem('loginVK');
     if (!user) return;
     const self: string = JSON.parse(user).login;
 
-    // this.messages.length = 0;
-    if (event.detail.length > 0) {
-      const recipient: RecipientWithMessages = {
-        login: event.detail[0].to === self ? event.detail[0].from : event.detail[0].to,
-        messages: [],
-      };
+    const messages: MessageOutcome[] = event.detail;
 
-      event.detail.forEach((message: MessageOutcome) => recipient.messages.push(message));
+    // this.messages.length = 0;
+    if (messages.length > 0) {
+      const firstMessage = messages[0];
+      if (!firstMessage) return;
+
+      const login = firstMessage.to === self ? firstMessage.from : firstMessage.to;
+
+      let unread = 0;
+
+      messages.forEach((el) => {
+        if (el.to === self && !el.status.isReaded) unread += 1;
+      });
+
+      const recipient: RecipientWithMessages = { login, messages: [...messages], unread };
+
+      contactsView.users.forEach((el) => {
+        if (el.login === recipient.login) {
+          const elRef = el;
+          elRef.unread = recipient.unread;
+        }
+      });
 
       this.messages.push(recipient);
       // здесь это нужно, когда из about возвращаются и выбран юзер
       this.showMessages(recipient, router);
+      DialogView.showUnread(recipient, parentComponent);
     }
   }
 
-  private updateMessageStatus(event: Event, router: Router) {
+  private updateMessageStatus(event: Event, router: Router, parentComponent: Component, contactsView: ContactsView) {
     if (!(event instanceof CustomEvent)) return;
 
-    const messageInfo: DeliveredMsg = event.detail;
+    const messageInfo: StatusMsg = event.detail;
 
     const recipient: RecipientWithMessages | undefined = this.messages.find((user) =>
       user.messages.find((message) => message.id === messageInfo.id),
     );
 
-    if (recipient) {
-      recipient.messages.forEach((message) => {
-        if (message.id === messageInfo.id) {
-          const msg = message;
-          msg.status.isDelivered = messageInfo.status.isDelivered;
+    if (!recipient) return;
+
+    recipient.messages.forEach((message) => {
+      if (message.id === messageInfo.id) {
+        const msg = message;
+        // ОПАСНЫЙ КОД, МОЖЕТ ЛУЧШЕ КОПИРОВАТЬ ВСЮ ФУНКЦИЮ!! 2 функционала на ней
+        if ('isDelivered' in messageInfo.status) msg.status.isDelivered = messageInfo.status.isDelivered;
+        if ('isReaded' in messageInfo.status) msg.status.isReaded = messageInfo.status.isReaded;
+      }
+    });
+
+    // this.showMessages(recipient, router);
+    this.updateMessages(recipient, router, event);
+
+    if (event.type === 'ReadSelfMessage') {
+      recipient.unread = 0;
+      contactsView.users.forEach((el) => {
+        if (recipient && el.login === recipient.login) {
+          const elRef = el;
+          elRef.unread = recipient.unread;
         }
       });
-      this.showMessages(recipient, router);
+      DialogView.showUnread(recipient, parentComponent);
+      this.scrollToMsg(recipient);
     }
   }
 }

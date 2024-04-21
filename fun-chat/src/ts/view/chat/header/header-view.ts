@@ -40,7 +40,7 @@ export default class HeaderView extends View {
     this.viewElementCreator.appendChildren([
       div(
         'header-wrapper',
-        label('header-wrapper__user', `User: ${JSON.parse(user).login}`),
+        label('header-wrapper__user', `${JSON.parse(user).login}`),
         h2('header-wrapper__title', 'Fun Chat'),
       ),
       div(
@@ -75,7 +75,7 @@ export default class HeaderView extends View {
 
   private static exit(router: Router) {
     const routerRef = router;
-    routerRef.lastRecipient = { login: '', online: true };
+    routerRef.lastRecipient = { login: '', online: true, unread: 0 };
     sessionStorage.removeItem('loginVK');
     router.navigate(Pages.LOGIN);
   }

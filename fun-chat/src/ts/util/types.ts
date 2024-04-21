@@ -48,11 +48,13 @@ export enum RequestType {
   MSG_SEND = 'MSG_SEND',
   MSG_FROM_USER = 'MSG_FROM_USER',
   MSG_DELIVER = 'MSG_DELIVER',
+  MSG_READ = 'MSG_READ',
 }
 
 export interface UserFromContacts {
   login: string;
   online: boolean;
+  unread: number;
 }
 
 interface BaseWSFormat {
@@ -93,11 +95,16 @@ export interface MessageOutcome {
 export interface RecipientWithMessages {
   login: string;
   messages: MessageOutcome[];
+  unread: number;
 }
 
-export interface DeliveredMsg {
+export interface StatusMsg {
   id: string;
   status: Status;
+}
+
+export interface ReadMsg {
+  id: string;
 }
 
 export interface LoginToGetHistory {
@@ -154,9 +161,15 @@ export interface ContactsResponse extends BaseWSFormat {
   };
 }
 
-export interface DeliveredMsgResponse extends BaseWSFormat {
+export interface StatusMsgResponse extends BaseWSFormat {
   payload: {
-    message: DeliveredMsg;
+    message: StatusMsg;
+  };
+}
+
+export interface ReadMsgRequest extends BaseWSFormat {
+  payload: {
+    message: ReadMsg;
   };
 }
 

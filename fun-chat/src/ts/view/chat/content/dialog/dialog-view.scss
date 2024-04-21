@@ -45,6 +45,7 @@
       height: 54vh;
     }
     & .msg {
+      position: relative;
       border: 1px solid darkgray;
       border-radius: 6px;
       width: 60%;
@@ -56,22 +57,62 @@
         align-self: flex-end;
         background-color: beige;
       }
+      &_divide {
+        margin-top: 80px;
+        &::after{
+          content: "New messages";
+          width: 166%;
+          display: block;
+          position: absolute;
+          top: -61px;
+          box-sizing: border-box;
+          border-bottom: 2px solid black;
+          text-align: center;
+/*           @media screen and (max-width: 600px) {
+            width: 166%;
+          } */
+        }
+      }
       &-header {
         display: flex;
         justify-content: space-around;
         margin: 10px 0;
+        box-sizing: border-box;
+        padding: 0 2px;
+        &__who {
+          margin-right: 5px;
+        }
       }
       &__text {
         background-color: rgba(169, 169, 169, 0.3);
         padding: 10px;
         margin: 10px;
         border-radius: 6px;
+        overflow: auto;
+        &::-webkit-scrollbar {
+          height: 10px;
+        }
+        &::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px burlywood;
+          border-radius: 8px;
+        }
+        &::-webkit-scrollbar-thumb {
+          border-radius: 5px;
+          background-color: darkgray;
+          border: 2px solid burlywood;
+        }
+        &::-webkit-scrollbar-corner {
+          background-color: transparent;
+        }
       }
       &__status {
         text-align: end;
         display: block;
         margin: 10px;
       }
+/*       @media screen and (max-width: 600px) {
+        width: 70%;
+      } */
     }
   }
   &-msg-box {
