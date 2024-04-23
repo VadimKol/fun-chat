@@ -9,7 +9,7 @@
   &-wrapper {
     display: flex;
     width: 80%;
-    justify-content: space-evenly;
+    justify-content: space-around;
     align-items: center;
     @media screen and (max-width: 800px) {
       width: 100%;
@@ -17,7 +17,7 @@
     }
     &__user {
       overflow: hidden;
-      max-width: 165px;
+      max-width: 30%;
     }
   }
   &-buttons {
