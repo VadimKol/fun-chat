@@ -354,6 +354,7 @@ export default class DialogView extends View {
         }
       } else status = 'sended';
 
+      const msgStatus = label('msg__status', `${status}`);
       const messageItem = div(
         'msg',
         div(
@@ -362,9 +363,12 @@ export default class DialogView extends View {
           label('msg-header__date', `${DialogView.formatDate(new Date(message.datetime))}`),
         ),
         p('msg__text', `${message.text}`),
-        label('msg__status', `${status}`),
+        msgStatus,
       );
-      if (message.from === self) messageItem.addClass('msg_self');
+      if (message.from === self) {
+        msgStatus.addClass('msg__status_show');
+        messageItem.addClass('msg_self');
+      }
       messageItem.setAttribute('id', `${message.id}`);
       if (firstUnreadedMsgId === message.id) messageItem.addClass('msg_divide');
       this.dialogContent.append(messageItem);
@@ -374,11 +378,6 @@ export default class DialogView extends View {
   private updateMessages(recipient: RecipientWithMessages, router: Router, event: CustomEvent) {
     if (recipient.login !== router.lastRecipient.login) return;
 
-    /* const user = sessionStorage.getItem('loginVK');
-    if (!user) return;
-    const self: string = JSON.parse(user).login; */
-
-    // const firstUnreadedMsgId = DialogView.getFirstUnreadedMsgId(recipient.messages, self);
     const messages = this.dialogContent.getChildren();
     recipient.messages.forEach((message) => {
       messages.forEach((el) => {
@@ -393,7 +392,6 @@ export default class DialogView extends View {
             }
           } else status.textContent = 'sended';
           if (event.type === 'ReadSelfMessage') el.removeClass('msg_divide');
-          // if(firstUnreadedMsgId === message.id) messageItem.addClass('msg_divide');
         }
       });
     });
@@ -471,8 +469,6 @@ export default class DialogView extends View {
   private static requestToRefreshDialog(event: Event, serverConnection: ServerConnection) {
     if (!(event instanceof CustomEvent)) return;
 
-    // serverConnection.connection.removeEventListener('open', this.requestToRefreshDialogHandler);
-
     const users: UserFromContacts[] = event.detail;
     users.forEach((user) => {
       const historyRequest: HistoryRequest = {
@@ -497,7 +493,6 @@ export default class DialogView extends View {
 
     const messages: MessageOutcome[] = event.detail;
 
-    // this.messages.length = 0;
     if (messages.length > 0) {
       const firstMessage = messages[0];
       if (!firstMessage) return;
@@ -547,13 +542,11 @@ export default class DialogView extends View {
     recipient.messages.forEach((message) => {
       if (message.id === messageInfo.id) {
         const msg = message;
-        // ОПАСНЫЙ КОД, МОЖЕТ ЛУЧШЕ КОПИРОВАТЬ ВСЮ ФУНКЦИЮ!! 2 функционала на ней
         if ('isDelivered' in messageInfo.status) msg.status.isDelivered = messageInfo.status.isDelivered;
         if ('isReaded' in messageInfo.status) msg.status.isReaded = messageInfo.status.isReaded;
       }
     });
 
-    // this.showMessages(recipient, router);
     this.updateMessages(recipient, router, event);
 
     if (event.type === 'ReadSelfMessage') {

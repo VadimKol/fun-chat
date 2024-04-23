@@ -17,6 +17,7 @@
       position: relative;
       box-sizing: border-box;
       border-radius: 6px;
+      overflow: hidden;
       &_unread {
         &::after {
           content: attr(data-after);
