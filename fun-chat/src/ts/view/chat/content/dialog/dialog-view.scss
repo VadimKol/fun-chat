@@ -26,13 +26,21 @@
     display: flex;
     flex-direction: column;
     overflow: auto;
-    &_first {
-      background-image: url(../../../../../assets/img/first.svg);
-      background-position: center;
+    &_first,
+    &_zero {
       background-size: 200% 200%;
       @media screen and (max-width: 800px) {
         background-size: 250% 250%;
       }
+    }
+    &_first {
+      background-image: url(../../../../../assets/img/first.svg);
+      background-position: center;
+    }
+    &_zero {
+      background-image: url(../../../../../assets/img/zero.svg);
+      background-position-x: 42%;
+      background-position-y: 50.5%;
     }
     &::-webkit-scrollbar {
       width: 10px;

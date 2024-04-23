@@ -95,7 +95,7 @@ export default class DialogView extends View {
       if (dialogRecipient) dialogRecipient.addClass('dialog-recipient_show');
 
       this.messageInput.addClass('dialog-msg-box__msg_show');
-    }
+    } else this.dialogContent.addClass('dialog-content_zero');
 
     this.addSelfMessageHandler = (event) => this.addSelfMessage(event, router, serverConnection);
     this.addExternalMessageHandler = (event) => this.addExternalMessage(event, router, parentComponent, contactsView);
@@ -250,6 +250,7 @@ export default class DialogView extends View {
     }
 
     this.scrollToMsg(recipient);
+    this.dialogContent.removeClass('dialog-content_zero');
   }
 
   private refreshStatusAndChat(event: Event, router: Router) {
