@@ -15,6 +15,10 @@
       width: 100%;
       justify-content: space-around;
     }
+    &__user {
+      overflow: hidden;
+      max-width: 165px;
+    }
   }
   &-buttons {
     display: flex;
