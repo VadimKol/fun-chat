@@ -1,0 +1,36 @@
+.reconnect {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  height: 100vh;
+  &-modal {
+    background-color: wheat;
+    border-radius: 100px;
+    width: 380px;
+    height: 80px;
+    margin: 0 20px;
+    display: flex;
+    justify-content: center;
+    &__text {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      &::before {
+        content: '';
+        display: block;
+        width: 30px;
+        height: 30px;
+        background-image: url(../../../assets/img/spinner.svg);
+        background-size: 100% 100%;
+      }
+    }
+  }
+}

@@ -263,6 +263,9 @@ export default class DialogView extends View {
       routerRef.lastRecipient.online = user.isLogined;
       if (user.isLogined) this.recipientStatus.removeClass('dialog-recipient__status_offline');
       else this.recipientStatus.addClass('dialog-recipient__status_offline');
+
+      if (!this.messages.some((message) => message.login === router.lastRecipient.login))
+        this.dialogContent.addClass('dialog-content_first');
     }
   }
 
@@ -293,6 +296,7 @@ export default class DialogView extends View {
     this.showMessages(recipient, router);
     this.readMsg(router, serverConnection);
     this.scrollToMsg(recipient);
+    this.dialogContent.removeClass('dialog-content_first');
   }
 
   private addExternalMessage(event: Event, router: Router, parentComponent: Component, contactsView: ContactsView) {
@@ -327,6 +331,7 @@ export default class DialogView extends View {
     this.showMessages(recipient, router);
     DialogView.showUnread(recipient, parentComponent);
     this.scrollToMsg(recipient);
+    this.dialogContent.removeClass('dialog-content_first');
   }
 
   private showMessages(recipient: RecipientWithMessages, router: Router) {
