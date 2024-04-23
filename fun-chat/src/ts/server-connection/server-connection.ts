@@ -15,6 +15,8 @@ import ReconnectView from '../view/reconnect/reconnect-view';
 export default class ServerConnection {
   public connection: WebSocket;
 
+  private isFirstConnection: boolean;
+
   private loginHandler: EventListener;
 
   private logoutHandler: EventListener;
@@ -52,6 +54,7 @@ export default class ServerConnection {
   private reconnectView: ReconnectView | null;
 
   constructor(url: string, router: Router) {
+    this.isFirstConnection = true;
     this.connection = new WebSocket(url);
 
     this.reconnectId = null;
@@ -71,7 +74,14 @@ export default class ServerConnection {
     this.readExternalMessageHandler = (event) => ServerConnection.readExternalMessage(event, router);
     this.enterHandler = () => this.reEnter(router);
     this.reconnectHandler = () => this.reconnect(url);
-    this.closeHandler = () => this.connection.close();
+    this.closeHandler = () => {
+      if (this.isFirstConnection) {
+        this.isFirstConnection = false;
+        this.connection.addEventListener('close', this.reconnectHandler);
+      }
+
+      this.connection.close();
+    };
     this.openHandler = () => this.open();
 
     this.addListeners();
@@ -116,6 +126,7 @@ export default class ServerConnection {
   }
 
   private open() {
+    this.isFirstConnection = false;
     this.connection.addEventListener('close', this.reconnectHandler);
 
     if (!this.reconnectId) return;

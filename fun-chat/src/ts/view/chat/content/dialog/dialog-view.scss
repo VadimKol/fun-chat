@@ -5,6 +5,10 @@
     justify-content: space-around;
     margin-bottom: 10px;
     opacity: 0;
+    &__name {
+      overflow: hidden;
+      max-width: 65%;
+    }
     &_show {
       opacity: 1;
     }
@@ -94,6 +98,8 @@
         padding: 0 2px;
         &__who {
           margin-right: 5px;
+          overflow: hidden;
+          max-width: 65%;
         }
       }
       &__text {
