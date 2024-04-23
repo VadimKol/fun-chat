@@ -79,7 +79,8 @@ export default class ServerConnection {
 
   private reEnter(router: Router) {
     this.connection.removeEventListener('Login', this.enterHandler);
-    router.isFirstRender = false;
+    const routerRef = router;
+    routerRef.isFirstRender = false;
     router.navigate(Pages.CHAT);
   }
 
