@@ -428,6 +428,8 @@ export default class DialogView extends View {
 
     this.scrollToMsg(recipient);
     this.dialogContent.removeClass('dialog-content_zero');
+
+    this.endEditMsg();
   }
 
   private refreshStatusAndChat(event: Event, router: Router) {
