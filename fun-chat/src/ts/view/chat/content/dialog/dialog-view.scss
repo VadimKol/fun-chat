@@ -129,6 +129,7 @@
         margin: 10px 0;
         box-sizing: border-box;
         padding: 0 2px;
+        flex-wrap: wrap;
         &__who,
         &__date {
           margin: 0;
@@ -137,6 +138,9 @@
           margin-right: 5px;
           overflow: hidden;
           max-width: 65%;
+        }
+        &__date {
+          text-align: center;
         }
       }
       &__text {
@@ -178,12 +182,18 @@
         &_show {
           display: block;
         }
+        @media screen and (max-width: 600px) {
+          margin: 10px 5px 10px 0;
+        }
       }
       &__edit {
         margin: 10px;
         display: none;
         &_show {
           display: block;
+        }
+        @media screen and (max-width: 600px) {
+          margin: 10px 0 10px 5px;
         }
       }
     }
