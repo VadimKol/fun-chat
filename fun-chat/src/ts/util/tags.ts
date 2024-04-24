@@ -13,9 +13,6 @@ export const h1 = (className: string, text: string) => new Component({ tag: 'h1'
 
 export const h2 = (className: string, text: string) => new Component({ tag: 'h2', className, text });
 
-/* export const nav = (className: string, ...children: Component[]) =>
-  new Component({ tag: 'nav', className }, ...children); */
-
 export const ul = (className: string, ...children: Component[]) => new Component({ tag: 'ul', className }, ...children);
 
 export const li = (className: string, text: string) => new Component({ tag: 'li', className, text });
@@ -27,7 +24,3 @@ export const button = (className: string, text: string, onClick: EventListener, 
 
 export const input = (className: string, onKeyUp: EventListener, type: string, placeholder: string) =>
   new Input({ className, onKeyUp, type, placeholder });
-
-/* export function createMenu(menuItems: string[]) {
-  return nav('nav', ul('menu', ...menuItems.map((item) => li('menu__item', item))));
-} */

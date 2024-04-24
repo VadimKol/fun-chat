@@ -49,6 +49,7 @@ export enum RequestType {
   MSG_FROM_USER = 'MSG_FROM_USER',
   MSG_DELIVER = 'MSG_DELIVER',
   MSG_READ = 'MSG_READ',
+  MSG_DELETE = 'MSG_DELETE',
 }
 
 export interface UserFromContacts {
@@ -81,6 +82,7 @@ export interface Status {
   isDelivered?: boolean;
   isReaded?: boolean;
   isEdited?: boolean;
+  isDeleted?: boolean;
 }
 
 export interface MessageOutcome {
@@ -103,7 +105,7 @@ export interface StatusMsg {
   status: Status;
 }
 
-export interface ReadMsg {
+export interface IdMsg {
   id: string;
 }
 
@@ -167,9 +169,9 @@ export interface StatusMsgResponse extends BaseWSFormat {
   };
 }
 
-export interface ReadMsgRequest extends BaseWSFormat {
+export interface ChangeMsgRequest extends BaseWSFormat {
   payload: {
-    message: ReadMsg;
+    message: IdMsg;
   };
 }
 

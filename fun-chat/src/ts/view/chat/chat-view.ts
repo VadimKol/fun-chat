@@ -1,3 +1,4 @@
+import './chat-view.scss';
 import View from '../view';
 import HeaderView from './header/header-view';
 import ContentView from './content/content-view';

@@ -76,6 +76,11 @@
       &_self {
         align-self: flex-end;
         background-color: beige;
+        @media (hover: hover) {
+          &:hover {
+              cursor: pointer;
+          }
+        }
       }
       &_divide {
         margin-top: 80px;
@@ -90,12 +95,37 @@
           text-align: center;
         }
       }
+      &-menu {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        top: 7px;
+        left: -60px;
+        background-color: #b8860b;
+        text-align: center;
+        box-sizing: border-box;
+        padding: 5px;
+        border-radius: 6px;
+        &__delete {
+          border-radius: 6px;
+          @media (hover: hover) {
+            &:hover {
+                background-color: rgba($color: darkgray, $alpha: 0.7);
+            }
+          }
+        }
+      }
       &-header {
         display: flex;
         justify-content: space-around;
         margin: 10px 0;
         box-sizing: border-box;
         padding: 0 2px;
+        &__who,
+        &__date {
+          margin: 0;
+        }
         &__who {
           margin-right: 5px;
           overflow: hidden;

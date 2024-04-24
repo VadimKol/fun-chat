@@ -1,14 +1,14 @@
 import './dialog-view.scss';
-import { button, input, div, label, p } from '../../../../util/tags';
+import { button, input, div, label, p, ul, li } from '../../../../util/tags';
 import View from '../../../view';
 import ServerConnection from '../../../../server-connection/server-connection';
 import Router from '../../../../router/router';
 import Component from '../../../../util/component';
 import {
+  ChangeMsgRequest,
   HistoryRequest,
   MessageOutcome,
   MessageRequest,
-  ReadMsgRequest,
   RecipientWithMessages,
   RequestType,
   ResponseUser,
@@ -50,13 +50,19 @@ export default class DialogView extends View {
 
   private readMsgHandler: EventListener;
 
-  private OptimiseHandler: EventListener;
+  private changeMsgHandler: EventListener;
 
-  private userScrollHandler: EventListener;
+  private deleteMsgRequestHandler: EventListener;
+
+  private deleteSelfMessageHandler: EventListener;
+
+  private deleteExternalMessageHandler: EventListener;
+
+  private closeMenuHandler: EventListener;
 
   private messages: RecipientWithMessages[];
 
-  private isUserScroll: boolean;
+  private menu: Component | null;
 
   constructor(
     parentComponent: Component,
@@ -71,6 +77,7 @@ export default class DialogView extends View {
     };
     super(params);
     this.messages = [];
+    this.menu = null;
     this.sendMsgHandler = () => this.sendMsg(router, serverConnection);
     this.keyEnterHandler = (event) => this.keyEnter(event, router, serverConnection);
     this.messageInput = input('dialog-msg-box__msg', this.keyEnterHandler, 'text', 'Message...');
@@ -104,10 +111,13 @@ export default class DialogView extends View {
     this.loadHistoryHandler = (event) => this.loadHistory(event, router, contactsView, parentComponent);
     this.readMsgHandler = () => this.readMsg(router, serverConnection);
 
-    parentComponent.getNode().addEventListener('Chat', this.chatHandler);
+    this.changeMsgHandler = (event) => this.changeMsg(event);
+    this.deleteMsgRequestHandler = (event) => DialogView.deleteMsgRequest(event, serverConnection);
+    this.deleteSelfMessageHandler = (event) => this.deleteMessage(event, router, parentComponent, contactsView);
+    this.deleteExternalMessageHandler = (event) => this.deleteMessage(event, router, parentComponent, contactsView);
+    this.closeMenuHandler = (event) => this.closeMenu(event);
 
-    // if (!router.isFirstRender) this.requestToRefreshDialog(serverConnection);
-    // serverConnection.connection.addEventListener('open', this.requestToRefreshDialogHandler);
+    parentComponent.getNode().addEventListener('Chat', this.chatHandler);
 
     // нужно запомнить, что когда обновляется список юзеров, обновляется и история сообщений с ними
     router.handler.currentComponent.getNode().addEventListener('GetHistoryUsers', this.requestToRefreshDialogHandler);
@@ -125,27 +135,17 @@ export default class DialogView extends View {
     router.handler.currentComponent.getNode().addEventListener('ReadMessageError', this.errorHandler);
     router.handler.currentComponent.getNode().addEventListener('ReadSelfMessage', this.updateMessageStatusHandler);
     router.handler.currentComponent.getNode().addEventListener('ReadExternalMessage', this.updateMessageStatusHandler);
+    router.handler.currentComponent.getNode().addEventListener('DeleteMessageError', this.errorHandler);
+    router.handler.currentComponent.getNode().addEventListener('DeleteSelfMessage', this.deleteSelfMessageHandler);
+    router.handler.currentComponent
+      .getNode()
+      .addEventListener('DeleteExternalMessage', this.deleteExternalMessageHandler);
 
     this.dialogContent.getNode().addEventListener('click', this.readMsgHandler);
+    this.dialogContent.getNode().addEventListener('wheel', this.readMsgHandler);
 
-    this.userScrollHandler = () => {
-      this.isUserScroll = true;
-    };
-
-    let ticking = false;
-    this.isUserScroll = true;
-    this.OptimiseHandler = () => {
-      if (this.isUserScroll)
-        if (!ticking) {
-          setTimeout(() => {
-            this.readMsg(router, serverConnection);
-            ticking = false;
-          }, 10);
-          ticking = true;
-        }
-    };
-    this.dialogContent.getNode().addEventListener('scroll', this.OptimiseHandler);
-    this.dialogContent.getNode().addEventListener('scrollend', this.userScrollHandler);
+    this.dialogContent.getNode().addEventListener('contextmenu', this.changeMsgHandler);
+    router.handler.currentComponent.getNode().addEventListener('click', this.closeMenuHandler);
   }
 
   private setContent() {
@@ -208,7 +208,7 @@ export default class DialogView extends View {
     );
 
     messages.forEach((message) => {
-      const messageRequest: ReadMsgRequest = {
+      const messageRequest: ChangeMsgRequest = {
         id: 'msg-read',
         type: RequestType.MSG_READ,
         payload: {
@@ -220,6 +220,119 @@ export default class DialogView extends View {
 
       serverConnection.sendRequest(JSON.stringify(messageRequest));
     });
+  }
+
+  private changeMsg(event: Event) {
+    const { target } = event;
+
+    if (!(target instanceof HTMLElement)) return;
+
+    const parent = target.parentElement;
+
+    if (!(parent instanceof HTMLElement)) return;
+
+    const msgFromMsgHeader = parent.parentElement;
+
+    if (!(msgFromMsgHeader instanceof HTMLElement)) return;
+
+    let message: HTMLElement | null = null;
+
+    if (target.classList.contains('msg_self')) message = target;
+    if (parent.classList.contains('msg_self')) message = parent;
+    if (msgFromMsgHeader.classList.contains('msg_self')) message = msgFromMsgHeader;
+
+    if (!message) return;
+
+    event.preventDefault();
+
+    if (this.menu) {
+      this.menu.destroy();
+      this.menu = null;
+    }
+
+    this.menu = ul('msg-menu', li('msg-menu__delete', 'Delete') /* ,li('msg-menu__edit','Edit') */);
+
+    message.append(this.menu.getNode());
+
+    this.menu.addListener('click', this.deleteMsgRequestHandler);
+  }
+
+  private static deleteMsgRequest(event: Event, serverConnection: ServerConnection) {
+    const { target } = event;
+
+    if (!(target instanceof HTMLElement)) return;
+
+    if (!target.classList.contains('msg-menu__delete')) return;
+
+    const menu = target.parentElement;
+
+    if (!(menu instanceof HTMLElement)) return;
+
+    const message = menu.parentElement;
+
+    if (!(message instanceof HTMLElement)) return;
+
+    const deleteRequest: ChangeMsgRequest = {
+      id: 'msg-delete',
+      type: RequestType.MSG_DELETE,
+      payload: {
+        message: {
+          id: message.id,
+        },
+      },
+    };
+
+    serverConnection.sendRequest(JSON.stringify(deleteRequest));
+  }
+
+  private deleteMessage(event: Event, router: Router, parentComponent: Component, contactsView: ContactsView) {
+    if (!(event instanceof CustomEvent)) return;
+
+    const messageInfo: StatusMsg = event.detail;
+
+    const recipient: RecipientWithMessages | undefined = this.messages.find((user) =>
+      user.messages.find((message) => message.id === messageInfo.id),
+    );
+
+    if (!recipient) return;
+
+    recipient.messages.forEach((message) => {
+      if (message.id === messageInfo.id) {
+        const msg = message;
+        if ('isDeleted' in messageInfo.status) {
+          if (!message.status.isReaded) recipient.unread -= 1;
+          msg.id = '';
+        }
+      }
+    });
+
+    recipient.messages = recipient.messages.filter((message) => message.id !== '');
+
+    this.showMessages(recipient, router);
+    this.menu = null;
+
+    if (event.type === 'DeleteExternalMessage') {
+      contactsView.users.forEach((el) => {
+        if (recipient && el.login === recipient.login) {
+          const elRef = el;
+          elRef.unread = recipient.unread;
+        }
+      });
+      DialogView.showUnread(recipient, parentComponent);
+    }
+  }
+
+  private closeMenu(event: Event) {
+    const { target } = event;
+
+    if (!(target instanceof HTMLElement)) return;
+
+    if (target.classList.contains('msg-menu') || target.classList.contains('msg-menu__delete')) return;
+
+    if (this.menu) {
+      this.menu.destroy();
+      this.menu = null;
+    }
   }
 
   private chat(event: Event, router: Router) {
@@ -354,13 +467,13 @@ export default class DialogView extends View {
         }
       } else status = 'sended';
 
-      const msgStatus = label('msg__status', `${status}`);
+      const msgStatus = p('msg__status', `${status}`);
       const messageItem = div(
         'msg',
         div(
           'msg-header',
-          label('msg-header__who', `${message.from === self ? 'you' : message.from}`),
-          label('msg-header__date', `${DialogView.formatDate(new Date(message.datetime))}`),
+          p('msg-header__who', `${message.from === self ? 'you' : message.from}`),
+          p('msg-header__date', `${DialogView.formatDate(new Date(message.datetime))}`),
         ),
         p('msg__text', `${message.text}`),
         msgStatus,
@@ -416,7 +529,6 @@ export default class DialogView extends View {
   }
 
   private scrollToMsg(recipient: RecipientWithMessages | undefined) {
-    this.isUserScroll = false;
     const user = sessionStorage.getItem('loginVK');
     if (!user) return;
     const self: string = JSON.parse(user).login;

@@ -41,6 +41,10 @@ export default class ServerConnection {
 
   private readExternalMessageHandler: EventListener;
 
+  private deleteSelfMessageHandler: EventListener;
+
+  private deleteExternalMessageHandler: EventListener;
+
   private enterHandler: EventListener;
 
   private reconnectHandler: EventListener;
@@ -72,6 +76,8 @@ export default class ServerConnection {
     this.messageDeliveredHandler = (event) => ServerConnection.messageDelivered(event, router);
     this.readSelfMessageHandler = (event) => ServerConnection.readSelfMessage(event, router);
     this.readExternalMessageHandler = (event) => ServerConnection.readExternalMessage(event, router);
+    this.deleteSelfMessageHandler = (event) => ServerConnection.deleteSelfMessage(event, router);
+    this.deleteExternalMessageHandler = (event) => ServerConnection.deleteExternalMessage(event, router);
     this.enterHandler = () => this.reEnter(router);
     this.reconnectHandler = () => this.reconnect(url);
     this.closeHandler = () => {
@@ -121,6 +127,8 @@ export default class ServerConnection {
     this.connection.addEventListener('message', this.messageDeliveredHandler);
     this.connection.addEventListener('message', this.readSelfMessageHandler);
     this.connection.addEventListener('message', this.readExternalMessageHandler);
+    this.connection.addEventListener('message', this.deleteSelfMessageHandler);
+    this.connection.addEventListener('message', this.deleteExternalMessageHandler);
     this.connection.addEventListener('open', this.openHandler);
     this.connection.addEventListener('error', this.closeHandler);
   }
@@ -455,6 +463,58 @@ export default class ServerConnection {
       if ('message' in response.payload)
         currentView.dispatchEvent(
           new CustomEvent('ReadExternalMessage', {
+            detail: response.payload.message,
+            bubbles: true,
+          }),
+        );
+
+    // console.log(`Данные получены с сервера: ${event.data}`);
+  }
+
+  private static deleteSelfMessage(event: Event, router: Router) {
+    const currentView = router.handler.currentComponent.getNode();
+
+    if (!(event instanceof MessageEvent)) return;
+
+    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
+
+    if (!(response.id === 'msg-delete')) return;
+
+    if (response.type === RequestType.ERROR) {
+      if ('error' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('DeleteMessageError', {
+            detail: response.payload.error,
+            bubbles: true,
+          }),
+        );
+    }
+
+    if (response.type === RequestType.MSG_DELETE)
+      if ('message' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('DeleteSelfMessage', {
+            detail: response.payload.message,
+            bubbles: true,
+          }),
+        );
+
+    // console.log(`Данные получены с сервера: ${event.data}`);
+  }
+
+  private static deleteExternalMessage(event: Event, router: Router) {
+    const currentView = router.handler.currentComponent.getNode();
+
+    if (!(event instanceof MessageEvent)) return;
+
+    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
+
+    if (!(response.id === null)) return;
+
+    if (response.type === RequestType.MSG_DELETE)
+      if ('message' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('DeleteExternalMessage', {
             detail: response.payload.message,
             bubbles: true,
           }),
