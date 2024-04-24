@@ -6,6 +6,7 @@ import Router from '../../../../router/router';
 import Component from '../../../../util/component';
 import {
   ChangeMsgRequest,
+  EditMsgRequest,
   HistoryRequest,
   MessageOutcome,
   MessageRequest,
@@ -22,6 +23,8 @@ export default class DialogView extends View {
 
   private sendBtn: Component;
 
+  private editBtn: Component;
+
   private dialogContent: Component;
 
   private recipientName: Component;
@@ -33,6 +36,8 @@ export default class DialogView extends View {
   private refreshStatusAndChatHandler: EventListener;
 
   private sendMsgHandler: EventListener;
+
+  private endEditMsgHandler: EventListener;
 
   private errorHandler: EventListener;
 
@@ -52,7 +57,7 @@ export default class DialogView extends View {
 
   private changeMsgHandler: EventListener;
 
-  private deleteMsgRequestHandler: EventListener;
+  private menuMsgRequestHandler: EventListener;
 
   private deleteSelfMessageHandler: EventListener;
 
@@ -63,6 +68,8 @@ export default class DialogView extends View {
   private messages: RecipientWithMessages[];
 
   private menu: Component | null;
+
+  private edited: string;
 
   constructor(
     parentComponent: Component,
@@ -78,10 +85,13 @@ export default class DialogView extends View {
     super(params);
     this.messages = [];
     this.menu = null;
+    this.edited = '';
     this.sendMsgHandler = () => this.sendMsg(router, serverConnection);
     this.keyEnterHandler = (event) => this.keyEnter(event, router, serverConnection);
+    this.endEditMsgHandler = () => this.endEditMsg();
     this.messageInput = input('dialog-msg-box__msg', this.keyEnterHandler, 'text', 'Message...');
     this.sendBtn = button('send', 'Send', this.sendMsgHandler, 'button');
+    this.editBtn = button('edit', 'X', this.endEditMsgHandler, 'button');
     this.sendBtn.addClass('disabled');
     this.errorHandler = (event) => DialogView.showError(event, modalError);
     this.dialogContent = div('dialog-content');
@@ -112,7 +122,7 @@ export default class DialogView extends View {
     this.readMsgHandler = () => this.readMsg(router, serverConnection);
 
     this.changeMsgHandler = (event) => this.changeMsg(event);
-    this.deleteMsgRequestHandler = (event) => DialogView.deleteMsgRequest(event, serverConnection);
+    this.menuMsgRequestHandler = (event) => this.menuMsgRequest(event, serverConnection);
     this.deleteSelfMessageHandler = (event) => this.deleteMessage(event, router, parentComponent, contactsView);
     this.deleteExternalMessageHandler = (event) => this.deleteMessage(event, router, parentComponent, contactsView);
     this.closeMenuHandler = (event) => this.closeMenu(event);
@@ -140,6 +150,9 @@ export default class DialogView extends View {
     router.handler.currentComponent
       .getNode()
       .addEventListener('DeleteExternalMessage', this.deleteExternalMessageHandler);
+    router.handler.currentComponent.getNode().addEventListener('EditMessageError', this.errorHandler);
+    router.handler.currentComponent.getNode().addEventListener('EditSelfMessage', this.updateMessageStatusHandler);
+    router.handler.currentComponent.getNode().addEventListener('EditExternalMessage', this.updateMessageStatusHandler);
 
     this.dialogContent.getNode().addEventListener('click', this.readMsgHandler);
     this.dialogContent.getNode().addEventListener('wheel', this.readMsgHandler);
@@ -152,7 +165,7 @@ export default class DialogView extends View {
     this.viewElementCreator.appendChildren([
       div('dialog-recipient', this.recipientName, this.recipientStatus),
       this.dialogContent,
-      div('dialog-msg-box', this.messageInput, this.sendBtn),
+      div('dialog-msg-box', div('wrap', this.messageInput, this.editBtn), this.sendBtn),
     ]);
   }
 
@@ -177,18 +190,43 @@ export default class DialogView extends View {
     messageBox.value = '';
     this.sendBtn.addClass('disabled');
 
-    const messageRequest: MessageRequest = {
-      id: 'msg-send',
-      type: RequestType.MSG_SEND,
-      payload: {
-        message: {
-          to: recipient,
-          text: message,
+    if (this.edited === '') {
+      const messageRequest: MessageRequest = {
+        id: 'msg-send',
+        type: RequestType.MSG_SEND,
+        payload: {
+          message: {
+            to: recipient,
+            text: message,
+          },
         },
-      },
-    };
+      };
+      serverConnection.sendRequest(JSON.stringify(messageRequest));
+    } else {
+      const editRequest: EditMsgRequest = {
+        id: 'msg-edit',
+        type: RequestType.MSG_EDIT,
+        payload: {
+          message: {
+            id: this.edited,
+            text: message,
+          },
+        },
+      };
+      serverConnection.sendRequest(JSON.stringify(editRequest));
+      this.endEditMsg();
+    }
+  }
 
-    serverConnection.sendRequest(JSON.stringify(messageRequest));
+  private endEditMsg() {
+    const messageBox = this.messageInput.getNode();
+
+    if (!(messageBox instanceof HTMLInputElement)) return;
+
+    messageBox.value = '';
+    this.edited = '';
+    this.editBtn.removeClass('edit_show');
+    this.sendBtn.addClass('disabled');
   }
 
   private readMsg(router: Router, serverConnection: ServerConnection) {
@@ -250,19 +288,17 @@ export default class DialogView extends View {
       this.menu = null;
     }
 
-    this.menu = ul('msg-menu', li('msg-menu__delete', 'Delete') /* ,li('msg-menu__edit','Edit') */);
+    this.menu = ul('msg-menu', li('msg-menu__delete', 'Delete'), li('msg-menu__edit', 'Edit'));
 
     message.append(this.menu.getNode());
 
-    this.menu.addListener('click', this.deleteMsgRequestHandler);
+    this.menu.addListener('click', this.menuMsgRequestHandler);
   }
 
-  private static deleteMsgRequest(event: Event, serverConnection: ServerConnection) {
+  private menuMsgRequest(event: Event, serverConnection: ServerConnection) {
     const { target } = event;
 
     if (!(target instanceof HTMLElement)) return;
-
-    if (!target.classList.contains('msg-menu__delete')) return;
 
     const menu = target.parentElement;
 
@@ -272,17 +308,46 @@ export default class DialogView extends View {
 
     if (!(message instanceof HTMLElement)) return;
 
-    const deleteRequest: ChangeMsgRequest = {
-      id: 'msg-delete',
-      type: RequestType.MSG_DELETE,
-      payload: {
-        message: {
-          id: message.id,
-        },
-      },
-    };
+    if (!target.classList.contains('msg-menu__delete') && !target.classList.contains('msg-menu__edit')) return;
 
-    serverConnection.sendRequest(JSON.stringify(deleteRequest));
+    if (this.menu) {
+      this.menu.destroy();
+      this.menu = null;
+    }
+
+    if (target.classList.contains('msg-menu__delete')) {
+      const deleteRequest: ChangeMsgRequest = {
+        id: 'msg-delete',
+        type: RequestType.MSG_DELETE,
+        payload: {
+          message: {
+            id: message.id,
+          },
+        },
+      };
+
+      serverConnection.sendRequest(JSON.stringify(deleteRequest));
+      // любое, но лучше не то, что меняют
+      this.endEditMsg();
+    }
+
+    if (target.classList.contains('msg-menu__edit')) {
+      const messageBox = this.messageInput.getNode();
+      if (!(messageBox instanceof HTMLInputElement)) return;
+
+      const messageText = message.children[1];
+
+      if (!messageText) return;
+
+      const msg = messageText.textContent;
+
+      if (!msg) return;
+
+      messageBox.value = msg;
+      this.edited = message.id;
+      this.editBtn.addClass('edit_show');
+      this.sendBtn.removeClass('disabled');
+    }
   }
 
   private deleteMessage(event: Event, router: Router, parentComponent: Component, contactsView: ContactsView) {
@@ -309,7 +374,6 @@ export default class DialogView extends View {
     recipient.messages = recipient.messages.filter((message) => message.id !== '');
 
     this.showMessages(recipient, router);
-    this.menu = null;
 
     if (event.type === 'DeleteExternalMessage') {
       contactsView.users.forEach((el) => {
@@ -327,7 +391,7 @@ export default class DialogView extends View {
 
     if (!(target instanceof HTMLElement)) return;
 
-    if (target.classList.contains('msg-menu') || target.classList.contains('msg-menu__delete')) return;
+    if (target.classList.contains('msg-menu__delete') || target.classList.contains('msg-menu__edit')) return;
 
     if (this.menu) {
       this.menu.destroy();
@@ -459,15 +523,16 @@ export default class DialogView extends View {
     const firstUnreadedMsgId = DialogView.getFirstUnreadedMsgId(recipient.messages, self);
     recipient.messages.forEach((message) => {
       let status: string = '';
+      let edited: string = '';
+      if (message.status.isEdited) edited = 'edited';
       if (message.status.isDelivered) {
         status = 'delivered';
-        if (message.status.isReaded) {
-          status = 'readed';
-          if (message.status.isEdited) status = 'edited';
-        }
+        if (message.status.isReaded) status = 'readed';
       } else status = 'sended';
 
       const msgStatus = p('msg__status', `${status}`);
+      const msgEdit = p('msg__edit', `${edited}`);
+      const msgFooter = div('msg-footer', msgEdit, msgStatus);
       const messageItem = div(
         'msg',
         div(
@@ -476,12 +541,15 @@ export default class DialogView extends View {
           p('msg-header__date', `${DialogView.formatDate(new Date(message.datetime))}`),
         ),
         p('msg__text', `${message.text}`),
-        msgStatus,
+        msgFooter,
       );
       if (message.from === self) {
         msgStatus.addClass('msg__status_show');
         messageItem.addClass('msg_self');
+        msgFooter.addClass('msg-footer_self');
+        if (edited !== '') msgFooter.addClass('msg-footer_edit');
       }
+      if (edited !== '') msgEdit.addClass('msg__edit_show');
       messageItem.setAttribute('id', `${message.id}`);
       if (firstUnreadedMsgId === message.id) messageItem.addClass('msg_divide');
       this.dialogContent.append(messageItem);
@@ -495,13 +563,23 @@ export default class DialogView extends View {
     recipient.messages.forEach((message) => {
       messages.forEach((el) => {
         const id = el.getNode().getAttribute('id');
-        const status = el.getNode().lastElementChild;
+        const footer = el.getChildren()[2];
+        const text = el.getChildren()[1];
+        if (!footer) return;
+        if (!text) return;
+        const status = footer.getNode().lastElementChild;
+        const editMsg = footer.getNode().firstElementChild;
         if (status && id && id === message.id) {
+          if (message.status.isEdited && editMsg) {
+            editMsg.textContent = 'edited';
+            editMsg.classList.add('msg__edit_show');
+            if (el.hasClass('msg_self')) footer.addClass('msg-footer_edit');
+            text.getNode().textContent = message.text;
+          }
           if (message.status.isDelivered) {
             status.textContent = 'delivered';
             if (message.status.isReaded) {
               status.textContent = 'readed';
-              if (message.status.isEdited) status.textContent = 'edited';
             }
           } else status.textContent = 'sended';
           if (event.type === 'ReadSelfMessage') el.removeClass('msg_divide');
@@ -656,6 +734,11 @@ export default class DialogView extends View {
         const msg = message;
         if ('isDelivered' in messageInfo.status) msg.status.isDelivered = messageInfo.status.isDelivered;
         if ('isReaded' in messageInfo.status) msg.status.isReaded = messageInfo.status.isReaded;
+        if ('isEdited' in messageInfo.status) {
+          msg.status.isEdited = messageInfo.status.isEdited;
+          const text = messageInfo?.text;
+          if (text) msg.text = text;
+        }
       }
     });
 

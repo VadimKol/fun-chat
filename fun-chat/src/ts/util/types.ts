@@ -50,6 +50,7 @@ export enum RequestType {
   MSG_DELIVER = 'MSG_DELIVER',
   MSG_READ = 'MSG_READ',
   MSG_DELETE = 'MSG_DELETE',
+  MSG_EDIT = 'MSG_EDIT',
 }
 
 export interface UserFromContacts {
@@ -102,11 +103,16 @@ export interface RecipientWithMessages {
 
 export interface StatusMsg {
   id: string;
+  text?: string;
   status: Status;
 }
 
 export interface IdMsg {
   id: string;
+}
+
+export interface EditMsg extends IdMsg {
+  text: string;
 }
 
 export interface LoginToGetHistory {
@@ -172,6 +178,12 @@ export interface StatusMsgResponse extends BaseWSFormat {
 export interface ChangeMsgRequest extends BaseWSFormat {
   payload: {
     message: IdMsg;
+  };
+}
+
+export interface EditMsgRequest extends BaseWSFormat {
+  payload: {
+    message: EditMsg;
   };
 }
 

@@ -45,6 +45,10 @@ export default class ServerConnection {
 
   private deleteExternalMessageHandler: EventListener;
 
+  private editSelfMessageHandler: EventListener;
+
+  private editExternalMessageHandler: EventListener;
+
   private enterHandler: EventListener;
 
   private reconnectHandler: EventListener;
@@ -78,6 +82,8 @@ export default class ServerConnection {
     this.readExternalMessageHandler = (event) => ServerConnection.readExternalMessage(event, router);
     this.deleteSelfMessageHandler = (event) => ServerConnection.deleteSelfMessage(event, router);
     this.deleteExternalMessageHandler = (event) => ServerConnection.deleteExternalMessage(event, router);
+    this.editSelfMessageHandler = (event) => ServerConnection.editSelfMessage(event, router);
+    this.editExternalMessageHandler = (event) => ServerConnection.editExternalMessage(event, router);
     this.enterHandler = () => this.reEnter(router);
     this.reconnectHandler = () => this.reconnect(url);
     this.closeHandler = () => {
@@ -129,6 +135,8 @@ export default class ServerConnection {
     this.connection.addEventListener('message', this.readExternalMessageHandler);
     this.connection.addEventListener('message', this.deleteSelfMessageHandler);
     this.connection.addEventListener('message', this.deleteExternalMessageHandler);
+    this.connection.addEventListener('message', this.editSelfMessageHandler);
+    this.connection.addEventListener('message', this.editExternalMessageHandler);
     this.connection.addEventListener('open', this.openHandler);
     this.connection.addEventListener('error', this.closeHandler);
   }
@@ -515,6 +523,58 @@ export default class ServerConnection {
       if ('message' in response.payload)
         currentView.dispatchEvent(
           new CustomEvent('DeleteExternalMessage', {
+            detail: response.payload.message,
+            bubbles: true,
+          }),
+        );
+
+    // console.log(`Данные получены с сервера: ${event.data}`);
+  }
+
+  private static editSelfMessage(event: Event, router: Router) {
+    const currentView = router.handler.currentComponent.getNode();
+
+    if (!(event instanceof MessageEvent)) return;
+
+    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
+
+    if (!(response.id === 'msg-edit')) return;
+
+    if (response.type === RequestType.ERROR) {
+      if ('error' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('EditMessageError', {
+            detail: response.payload.error,
+            bubbles: true,
+          }),
+        );
+    }
+
+    if (response.type === RequestType.MSG_EDIT)
+      if ('message' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('EditSelfMessage', {
+            detail: response.payload.message,
+            bubbles: true,
+          }),
+        );
+
+    // console.log(`Данные получены с сервера: ${event.data}`);
+  }
+
+  private static editExternalMessage(event: Event, router: Router) {
+    const currentView = router.handler.currentComponent.getNode();
+
+    if (!(event instanceof MessageEvent)) return;
+
+    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
+
+    if (!(response.id === null)) return;
+
+    if (response.type === RequestType.MSG_EDIT)
+      if ('message' in response.payload)
+        currentView.dispatchEvent(
+          new CustomEvent('EditExternalMessage', {
             detail: response.payload.message,
             bubbles: true,
           }),

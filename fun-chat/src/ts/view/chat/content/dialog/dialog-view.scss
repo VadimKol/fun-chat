@@ -107,8 +107,15 @@
         box-sizing: border-box;
         padding: 5px;
         border-radius: 6px;
-        &__delete {
+        border: 1px solid darkgray;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        &__delete,
+        &__edit {
           border-radius: 6px;
+          width: 100%;
+          text-align: left;
           @media (hover: hover) {
             &:hover {
                 background-color: rgba($color: darkgray, $alpha: 0.7);
@@ -154,10 +161,27 @@
           background-color: transparent;
         }
       }
+      &-footer {
+        display: flex;
+        justify-content: flex-start;
+        &_self {
+          justify-content: flex-end;
+        }
+        &_edit {
+          justify-content: space-between;
+        }
+      }
       &__status {
         text-align: end;
         display: none;
         margin: 10px;
+        &_show {
+          display: block;
+        }
+      }
+      &__edit {
+        margin: 10px;
+        display: none;
         &_show {
           display: block;
         }
@@ -172,14 +196,28 @@
       flex-direction: column;
     }
     &__msg {
-      width: 70%;
+      width: 100%;
       visibility: hidden;
       &_show {
         visibility: visible;
       }
+    }
+    & .wrap {
+      width: 70%;
+      position: relative;
       @media screen and (max-width: 800px) {
         width: 100%;
         margin-bottom: 10px;
+      }
+      & .edit {
+        padding: 8px 10px;
+        position: absolute;
+        top: 3px;
+        right: 7px;
+        display: none;
+        &_show {
+          display: block;
+        }
       }
     }
     & .send {
