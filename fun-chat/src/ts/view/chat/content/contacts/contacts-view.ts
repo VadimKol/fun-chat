@@ -116,9 +116,6 @@ export default class ContactsView extends View {
 
     const status = event.type === 'ActiveUsers';
 
-    // !!не уверен
-    // if (status) this.users.length = 0;
-
     event.detail.forEach((user: ResponseUser) => {
       this.users.push({
         login: user.login,

@@ -148,7 +148,7 @@
         padding: 10px;
         margin: 10px;
         border-radius: 6px;
-        overflow: auto;
+        word-wrap: break-word;
         &::-webkit-scrollbar {
           height: 10px;
         }

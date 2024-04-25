@@ -190,7 +190,6 @@ export default class ServerConnection {
       currentView.dispatchEvent(new CustomEvent('Login', { bubbles: true }));
       this.connection.dispatchEvent(new CustomEvent('Login', { bubbles: true }));
     }
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static logout(event: Event, router: Router) {
@@ -214,7 +213,6 @@ export default class ServerConnection {
 
     if (response.type === RequestType.USER_LOGOUT)
       currentView.dispatchEvent(new CustomEvent('Logout', { bubbles: true }));
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static getOnlineUsers(event: Event, router: Router) {
@@ -244,8 +242,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static getOfflineUsers(event: Event, router: Router) {
@@ -275,8 +271,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static externalLogin(event: Event, router: Router) {
@@ -296,8 +290,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-      // console.log(`Данные получены с сервера: ${event.data}`);
     }
   }
 
@@ -318,7 +310,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-      // console.log(`Данные получены с сервера: ${event.data}`);
     }
   }
 
@@ -349,8 +340,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static recieveExternalMessage(event: Event, router: Router) {
@@ -370,8 +359,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static getHistory(event: Event, router: Router) {
@@ -401,8 +388,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static messageDelivered(event: Event, router: Router) {
@@ -422,8 +407,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-      // console.log(`Данные получены с сервера: ${event.data}`);
     }
   }
 
@@ -454,8 +437,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static readExternalMessage(event: Event, router: Router) {
@@ -475,8 +456,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static deleteSelfMessage(event: Event, router: Router) {
@@ -506,8 +485,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static deleteExternalMessage(event: Event, router: Router) {
@@ -527,8 +504,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static editSelfMessage(event: Event, router: Router) {
@@ -558,8 +533,6 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 
   private static editExternalMessage(event: Event, router: Router) {
@@ -579,7 +552,5 @@ export default class ServerConnection {
             bubbles: true,
           }),
         );
-
-    // console.log(`Данные получены с сервера: ${event.data}`);
   }
 }
