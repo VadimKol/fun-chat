@@ -1,15 +1,5 @@
 import Router from '../router/router';
-import {
-  AuthResponse,
-  ResponseError,
-  RequestType,
-  ContactsResponse,
-  MessageResponse,
-  HistoryResponse,
-  StatusMsgResponse,
-  AuthRequest,
-  Pages,
-} from '../util/types';
+import { RequestType, AuthRequest, Pages, Response, MessageOutcome, StatusMsg, ResponseUser } from '../util/types';
 import ReconnectView from '../view/reconnect/reconnect-view';
 
 export default class ServerConnection {
@@ -68,22 +58,61 @@ export default class ServerConnection {
     this.reconnectId = null;
     this.reconnectView = null;
 
-    this.loginHandler = (event) => this.login(event, router);
-    this.logoutHandler = (event) => ServerConnection.logout(event, router);
-    this.getOnlineUsersHandler = (event) => ServerConnection.getOnlineUsers(event, router);
-    this.getOfflineUsersHandler = (event) => ServerConnection.getOfflineUsers(event, router);
-    this.externalLoginHandler = (event) => ServerConnection.externalLogin(event, router);
-    this.externalLogoutHandler = (event) => ServerConnection.externalLogout(event, router);
-    this.recieveSelfMessageHandler = (event) => ServerConnection.recieveSelfMessage(event, router);
-    this.recieveExternalMessageHandler = (event) => ServerConnection.recieveExternalMessage(event, router);
-    this.getHistoryHandler = (event) => ServerConnection.getHistory(event, router);
-    this.messageDeliveredHandler = (event) => ServerConnection.messageDelivered(event, router);
-    this.readSelfMessageHandler = (event) => ServerConnection.readSelfMessage(event, router);
-    this.readExternalMessageHandler = (event) => ServerConnection.readExternalMessage(event, router);
-    this.deleteSelfMessageHandler = (event) => ServerConnection.deleteSelfMessage(event, router);
-    this.deleteExternalMessageHandler = (event) => ServerConnection.deleteExternalMessage(event, router);
-    this.editSelfMessageHandler = (event) => ServerConnection.editSelfMessage(event, router);
-    this.editExternalMessageHandler = (event) => ServerConnection.editExternalMessage(event, router);
+    this.loginHandler = (event) =>
+      this.getResponse(event, router, 'login', 'LoginError', RequestType.USER_LOGIN, 'Login');
+    this.logoutHandler = (event) =>
+      this.getResponse(event, router, 'logout', 'LogoutError', RequestType.USER_LOGOUT, 'Logout');
+
+    this.getOnlineUsersHandler = (event) =>
+      this.getResponse(
+        event,
+        router,
+        'get_active_users',
+        'ActiveContactsError',
+        RequestType.USER_ACTIVE,
+        'ActiveUsers',
+      );
+    this.getOfflineUsersHandler = (event) =>
+      this.getResponse(
+        event,
+        router,
+        'get_inactive_users',
+        'InactiveContactsError',
+        RequestType.USER_INACTIVE,
+        'InactiveUsers',
+      );
+
+    this.externalLoginHandler = (event) =>
+      this.getResponse(event, router, null, '', RequestType.USER_EXTERNAL_LOGIN, 'ExternalLogin');
+    this.externalLogoutHandler = (event) =>
+      this.getResponse(event, router, null, '', RequestType.USER_EXTERNAL_LOGOUT, 'ExternalLogout');
+
+    this.recieveSelfMessageHandler = (event) =>
+      this.getResponse(event, router, 'msg-send', 'ReceiveMessageError', RequestType.MSG_SEND, 'ReceiveSelfMessage');
+    this.recieveExternalMessageHandler = (event) =>
+      this.getResponse(event, router, null, '', RequestType.MSG_SEND, 'ReceiveExternalMessage');
+
+    this.getHistoryHandler = (event) =>
+      this.getResponse(event, router, 'get_history', 'GetHistoryError', RequestType.MSG_FROM_USER, 'GetHistory');
+
+    this.messageDeliveredHandler = (event) =>
+      this.getResponse(event, router, null, '', RequestType.MSG_DELIVER, 'MessageDelivered');
+
+    this.readSelfMessageHandler = (event) =>
+      this.getResponse(event, router, 'msg-read', 'ReadMessageError', RequestType.MSG_READ, 'ReadSelfMessage');
+    this.readExternalMessageHandler = (event) =>
+      this.getResponse(event, router, null, '', RequestType.MSG_READ, 'ReadExternalMessage');
+
+    this.deleteSelfMessageHandler = (event) =>
+      this.getResponse(event, router, 'msg-delete', 'DeleteMessageError', RequestType.MSG_DELETE, 'DeleteSelfMessage');
+    this.deleteExternalMessageHandler = (event) =>
+      this.getResponse(event, router, null, '', RequestType.MSG_DELETE, 'DeleteExternalMessage');
+
+    this.editSelfMessageHandler = (event) =>
+      this.getResponse(event, router, 'msg-edit', 'EditMessageError', RequestType.MSG_EDIT, 'EditSelfMessage');
+    this.editExternalMessageHandler = (event) =>
+      this.getResponse(event, router, null, '', RequestType.MSG_EDIT, 'EditExternalMessage');
+
     this.enterHandler = () => this.reEnter(router);
     this.reconnectHandler = () => this.reconnect(url);
     this.closeHandler = () => {
@@ -167,390 +196,41 @@ export default class ServerConnection {
     }
   }
 
-  private login(event: Event, router: Router) {
+  private getResponse(
+    event: Event,
+    router: Router,
+    responseTypeId: string | null,
+    errorEventName: string,
+    requestType: RequestType,
+    outputEventName: string,
+  ) {
     const currentView = router.handler.currentComponent.getNode();
 
     if (!(event instanceof MessageEvent)) return;
 
-    const response: AuthResponse | ResponseError = JSON.parse(event.data);
+    const response: Response = JSON.parse(event.data);
 
-    if (response.id !== 'login') return;
+    if (response.id !== responseTypeId) return;
 
-    if (response.type === RequestType.ERROR) {
+    if (responseTypeId !== null && response.type === RequestType.ERROR) {
       if ('error' in response.payload)
         currentView.dispatchEvent(
-          new CustomEvent('LoginError', {
+          new CustomEvent(errorEventName, {
             detail: response.payload.error,
             bubbles: true,
           }),
         );
     }
 
-    if (response.type === RequestType.USER_LOGIN) {
-      currentView.dispatchEvent(new CustomEvent('Login', { bubbles: true }));
-      this.connection.dispatchEvent(new CustomEvent('Login', { bubbles: true }));
+    if (response.type === requestType) {
+      let details: ResponseUser[] | ResponseUser | MessageOutcome | StatusMsg | MessageOutcome[] | null = null;
+      if ('users' in response.payload) details = response.payload.users;
+      if ('user' in response.payload) details = response.payload.user;
+      if ('message' in response.payload) details = response.payload.message;
+      if ('messages' in response.payload) details = response.payload.messages;
+      currentView.dispatchEvent(new CustomEvent(outputEventName, { detail: details, bubbles: true }));
+      if (requestType === RequestType.USER_LOGIN)
+        this.connection.dispatchEvent(new CustomEvent(outputEventName, { bubbles: true }));
     }
-  }
-
-  private static logout(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: AuthResponse | ResponseError = JSON.parse(event.data);
-
-    if (response.id !== 'logout') return;
-
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('LogoutError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
-    if (response.type === RequestType.USER_LOGOUT)
-      currentView.dispatchEvent(new CustomEvent('Logout', { bubbles: true }));
-  }
-
-  private static getOnlineUsers(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: ContactsResponse | ResponseError = JSON.parse(event.data);
-
-    if (response.id !== 'get_active_users') return;
-
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ActiveContactsError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
-    if (response.type === RequestType.USER_ACTIVE)
-      if ('users' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ActiveUsers', {
-            detail: response.payload.users,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static getOfflineUsers(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: ContactsResponse | ResponseError = JSON.parse(event.data);
-
-    if (response.id !== 'get_inactive_users') return;
-
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('InactiveContactsError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
-    if (response.type === RequestType.USER_INACTIVE)
-      if ('users' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('InactiveUsers', {
-            detail: response.payload.users,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static externalLogin(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: AuthResponse = JSON.parse(event.data);
-
-    if (response.id !== null) return;
-
-    if (response.type === RequestType.USER_EXTERNAL_LOGIN) {
-      if ('user' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ExternalLogin', {
-            detail: response.payload.user,
-            bubbles: true,
-          }),
-        );
-    }
-  }
-
-  private static externalLogout(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: AuthResponse = JSON.parse(event.data);
-
-    if (response.id !== null) return;
-
-    if (response.type === RequestType.USER_EXTERNAL_LOGOUT) {
-      if ('user' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ExternalLogout', {
-            detail: response.payload.user,
-            bubbles: true,
-          }),
-        );
-    }
-  }
-
-  private static recieveSelfMessage(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: MessageResponse | ResponseError = JSON.parse(event.data);
-
-    if (!(response.id === 'msg-send')) return;
-
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ReceiveMessageError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
-    if (response.type === RequestType.MSG_SEND)
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ReceiveSelfMessage', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static recieveExternalMessage(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: MessageResponse | ResponseError = JSON.parse(event.data);
-
-    if (!(response.id === null)) return;
-
-    if (response.type === RequestType.MSG_SEND)
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ReceiveExternalMessage', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static getHistory(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: HistoryResponse | ResponseError = JSON.parse(event.data);
-
-    if (response.id !== 'get_history') return;
-
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('GetHistoryError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
-    if (response.type === RequestType.MSG_FROM_USER)
-      if ('messages' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('GetHistory', {
-            detail: response.payload.messages,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static messageDelivered(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: StatusMsgResponse = JSON.parse(event.data);
-
-    if (response.id !== null) return;
-
-    if (response.type === RequestType.MSG_DELIVER) {
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('MessageDelivered', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
-    }
-  }
-
-  private static readSelfMessage(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
-
-    if (!(response.id === 'msg-read')) return;
-
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ReadMessageError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
-    if (response.type === RequestType.MSG_READ)
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ReadSelfMessage', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static readExternalMessage(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
-
-    if (!(response.id === null)) return;
-
-    if (response.type === RequestType.MSG_READ)
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('ReadExternalMessage', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static deleteSelfMessage(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
-
-    if (!(response.id === 'msg-delete')) return;
-
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('DeleteMessageError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
-    if (response.type === RequestType.MSG_DELETE)
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('DeleteSelfMessage', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static deleteExternalMessage(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
-
-    if (!(response.id === null)) return;
-
-    if (response.type === RequestType.MSG_DELETE)
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('DeleteExternalMessage', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static editSelfMessage(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
-
-    if (!(response.id === 'msg-edit')) return;
-
-    if (response.type === RequestType.ERROR) {
-      if ('error' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('EditMessageError', {
-            detail: response.payload.error,
-            bubbles: true,
-          }),
-        );
-    }
-
-    if (response.type === RequestType.MSG_EDIT)
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('EditSelfMessage', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
-  }
-
-  private static editExternalMessage(event: Event, router: Router) {
-    const currentView = router.handler.currentComponent.getNode();
-
-    if (!(event instanceof MessageEvent)) return;
-
-    const response: StatusMsgResponse | ResponseError = JSON.parse(event.data);
-
-    if (!(response.id === null)) return;
-
-    if (response.type === RequestType.MSG_EDIT)
-      if ('message' in response.payload)
-        currentView.dispatchEvent(
-          new CustomEvent('EditExternalMessage', {
-            detail: response.payload.message,
-            bubbles: true,
-          }),
-        );
   }
 }

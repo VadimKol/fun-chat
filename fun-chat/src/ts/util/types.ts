@@ -129,7 +129,7 @@ export interface AuthRequest extends BaseWSFormat {
   };
 }
 
-export interface AuthResponse extends BaseWSFormat {
+interface AuthResponse extends BaseWSFormat {
   payload: {
     user: ResponseUser;
   };
@@ -141,7 +141,7 @@ export interface MessageRequest extends BaseWSFormat {
   };
 }
 
-export interface MessageResponse extends BaseWSFormat {
+interface MessageResponse extends BaseWSFormat {
   payload: {
     message: MessageOutcome;
   };
@@ -153,7 +153,7 @@ export interface HistoryRequest extends BaseWSFormat {
   };
 }
 
-export interface HistoryResponse extends BaseWSFormat {
+interface HistoryResponse extends BaseWSFormat {
   payload: {
     messages: MessageOutcome[];
   };
@@ -163,13 +163,13 @@ export interface ContactsRequest extends BaseWSFormat {
   payload: null;
 }
 
-export interface ContactsResponse extends BaseWSFormat {
+interface ContactsResponse extends BaseWSFormat {
   payload: {
     users: ResponseUser[];
   };
 }
 
-export interface StatusMsgResponse extends BaseWSFormat {
+interface StatusMsgResponse extends BaseWSFormat {
   payload: {
     message: StatusMsg;
   };
@@ -187,6 +187,14 @@ export interface EditMsgRequest extends BaseWSFormat {
   };
 }
 
-export interface ResponseError extends BaseWSFormat {
+interface ResponseError extends BaseWSFormat {
   payload: WsError;
 }
+
+export type Response =
+  | AuthResponse
+  | ResponseError
+  | ContactsResponse
+  | MessageResponse
+  | HistoryResponse
+  | StatusMsgResponse;
