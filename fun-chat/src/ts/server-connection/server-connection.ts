@@ -88,28 +88,28 @@ export default class ServerConnection {
       this.getResponse(event, router, null, '', RequestType.USER_EXTERNAL_LOGOUT, 'ExternalLogout');
 
     this.recieveSelfMessageHandler = (event) =>
-      this.getResponse(event, router, 'msg-send', 'ReceiveMessageError', RequestType.MSG_SEND, 'ReceiveSelfMessage');
+      this.getResponse(event, router, 'msg-send', 'DialogError', RequestType.MSG_SEND, 'ReceiveSelfMessage');
     this.recieveExternalMessageHandler = (event) =>
       this.getResponse(event, router, null, '', RequestType.MSG_SEND, 'ReceiveExternalMessage');
 
     this.getHistoryHandler = (event) =>
-      this.getResponse(event, router, 'get_history', 'GetHistoryError', RequestType.MSG_FROM_USER, 'GetHistory');
+      this.getResponse(event, router, 'get_history', 'DialogError', RequestType.MSG_FROM_USER, 'GetHistory');
 
     this.messageDeliveredHandler = (event) =>
       this.getResponse(event, router, null, '', RequestType.MSG_DELIVER, 'MessageDelivered');
 
     this.readSelfMessageHandler = (event) =>
-      this.getResponse(event, router, 'msg-read', 'ReadMessageError', RequestType.MSG_READ, 'ReadSelfMessage');
+      this.getResponse(event, router, 'msg-read', 'DialogError', RequestType.MSG_READ, 'ReadSelfMessage');
     this.readExternalMessageHandler = (event) =>
       this.getResponse(event, router, null, '', RequestType.MSG_READ, 'ReadExternalMessage');
 
     this.deleteSelfMessageHandler = (event) =>
-      this.getResponse(event, router, 'msg-delete', 'DeleteMessageError', RequestType.MSG_DELETE, 'DeleteSelfMessage');
+      this.getResponse(event, router, 'msg-delete', 'DialogError', RequestType.MSG_DELETE, 'DeleteSelfMessage');
     this.deleteExternalMessageHandler = (event) =>
       this.getResponse(event, router, null, '', RequestType.MSG_DELETE, 'DeleteExternalMessage');
 
     this.editSelfMessageHandler = (event) =>
-      this.getResponse(event, router, 'msg-edit', 'EditMessageError', RequestType.MSG_EDIT, 'EditSelfMessage');
+      this.getResponse(event, router, 'msg-edit', 'DialogError', RequestType.MSG_EDIT, 'EditSelfMessage');
     this.editExternalMessageHandler = (event) =>
       this.getResponse(event, router, null, '', RequestType.MSG_EDIT, 'EditExternalMessage');
 

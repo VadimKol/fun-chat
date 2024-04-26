@@ -37,8 +37,6 @@ export default class DialogView extends View {
 
   private sendMsgHandler: EventListener;
 
-  private endEditMsgHandler: EventListener;
-
   private errorHandler: EventListener;
 
   private addSelfMessageHandler: EventListener;
@@ -55,15 +53,11 @@ export default class DialogView extends View {
 
   private readMsgHandler: EventListener;
 
-  private changeMsgHandler: EventListener;
-
   private menuMsgRequestHandler: EventListener;
 
   private deleteSelfMessageHandler: EventListener;
 
   private deleteExternalMessageHandler: EventListener;
-
-  private closeMenuHandler: EventListener;
 
   private messages: RecipientWithMessages[];
 
@@ -88,10 +82,9 @@ export default class DialogView extends View {
     this.edited = '';
     this.sendMsgHandler = () => this.sendMsg(router, serverConnection);
     this.keyEnterHandler = (event) => this.keyEnter(event, router, serverConnection);
-    this.endEditMsgHandler = () => this.endEditMsg();
     this.messageInput = input('dialog-msg-box__msg', this.keyEnterHandler, 'text', 'Message...');
     this.sendBtn = button('send', 'Send', this.sendMsgHandler, 'button');
-    this.editBtn = button('edit', 'X', this.endEditMsgHandler, 'button');
+    this.editBtn = button('edit', 'X', this.endEditMsg.bind(this), 'button');
     this.sendBtn.addClass('disabled');
     this.errorHandler = (event) => DialogView.showError(event, modalError);
     this.dialogContent = div('dialog-content');
@@ -121,11 +114,9 @@ export default class DialogView extends View {
     this.loadHistoryHandler = (event) => this.loadHistory(event, router, contactsView, parentComponent);
     this.readMsgHandler = () => this.readMsg(router, serverConnection);
 
-    this.changeMsgHandler = (event) => this.changeMsg(event);
     this.menuMsgRequestHandler = (event) => this.menuMsgRequest(event, serverConnection);
     this.deleteSelfMessageHandler = (event) => this.deleteMessage(event, router, parentComponent, contactsView);
     this.deleteExternalMessageHandler = (event) => this.deleteMessage(event, router, parentComponent, contactsView);
-    this.closeMenuHandler = (event) => this.closeMenu(event);
 
     parentComponent.getNode().addEventListener('Chat', this.chatHandler);
 
@@ -133,32 +124,28 @@ export default class DialogView extends View {
     router.handler.currentComponent.getNode().addEventListener('GetHistoryUsers', this.requestToRefreshDialogHandler);
     router.handler.currentComponent.getNode().addEventListener('ExternalLogin', this.refreshStatusAndChatHandler);
     router.handler.currentComponent.getNode().addEventListener('ExternalLogout', this.refreshStatusAndChatHandler);
-    router.handler.currentComponent.getNode().addEventListener('ReceiveMessageError', this.errorHandler);
     router.handler.currentComponent.getNode().addEventListener('ReceiveSelfMessage', this.addSelfMessageHandler);
     router.handler.currentComponent
       .getNode()
       .addEventListener('ReceiveExternalMessage', this.addExternalMessageHandler);
-    router.handler.currentComponent.getNode().addEventListener('GetHistoryError', this.errorHandler);
     router.handler.currentComponent.getNode().addEventListener('GetHistory', this.loadHistoryHandler);
     router.handler.currentComponent.getNode().addEventListener('MessageDelivered', this.updateMessageStatusHandler);
 
-    router.handler.currentComponent.getNode().addEventListener('ReadMessageError', this.errorHandler);
     router.handler.currentComponent.getNode().addEventListener('ReadSelfMessage', this.updateMessageStatusHandler);
     router.handler.currentComponent.getNode().addEventListener('ReadExternalMessage', this.updateMessageStatusHandler);
-    router.handler.currentComponent.getNode().addEventListener('DeleteMessageError', this.errorHandler);
     router.handler.currentComponent.getNode().addEventListener('DeleteSelfMessage', this.deleteSelfMessageHandler);
     router.handler.currentComponent
       .getNode()
       .addEventListener('DeleteExternalMessage', this.deleteExternalMessageHandler);
-    router.handler.currentComponent.getNode().addEventListener('EditMessageError', this.errorHandler);
     router.handler.currentComponent.getNode().addEventListener('EditSelfMessage', this.updateMessageStatusHandler);
     router.handler.currentComponent.getNode().addEventListener('EditExternalMessage', this.updateMessageStatusHandler);
+    router.handler.currentComponent.getNode().addEventListener('DialogError', this.errorHandler);
 
     this.dialogContent.getNode().addEventListener('click', this.readMsgHandler);
     this.dialogContent.getNode().addEventListener('wheel', this.readMsgHandler);
 
-    this.dialogContent.getNode().addEventListener('contextmenu', this.changeMsgHandler);
-    router.handler.currentComponent.getNode().addEventListener('click', this.closeMenuHandler);
+    this.dialogContent.getNode().addEventListener('contextmenu', this.createMenu.bind(this));
+    router.handler.currentComponent.getNode().addEventListener('click', this.closeMenu.bind(this));
   }
 
   private setContent() {
@@ -260,7 +247,7 @@ export default class DialogView extends View {
     });
   }
 
-  private changeMsg(event: Event) {
+  private createMenu(event: Event) {
     const { target } = event;
 
     if (!(target instanceof HTMLElement)) return;
