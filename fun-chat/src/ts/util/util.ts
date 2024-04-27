@@ -1,50 +1,46 @@
-class Util {
-  private randomNumber: number;
+import Component from './component';
+import { MessageOutcome } from './types';
 
-  private hexValue: string;
-
-  private readonly carFirstNames: string[];
-
-  private readonly carSecondNames: string[];
-
-  constructor() {
-    this.randomNumber = 0;
-    this.hexValue = '';
-    this.carFirstNames = [
-      'Lada',
-      'Opel',
-      'BMW',
-      'Audi',
-      'Mersedes',
-      'Scoda',
-      'Ford',
-      'Chrysler',
-      'Tesla',
-      'Volkswagen',
-    ];
-    this.carSecondNames = ['Granta', 'Vesta', 'X5', 'X3', 'TT', 'Focus', 'Mustang', 'Yeti', 'Q7', 'Polo'];
-  }
-
-  public getRandomInteger(min: number, max: number) {
-    this.randomNumber = Math.trunc(Math.random() * (max - min + 1)) + min;
-    return this.randomNumber;
-  }
-
-  public getRandomName() {
-    return `${this.carFirstNames[this.getRandomInteger(0, 9)]} ${this.carSecondNames[this.getRandomInteger(0, 9)]}`;
-  }
-
-  public getRandomColor() {
-    return this.RGBtoHex(this.getRandomInteger(0, 255), this.getRandomInteger(0, 255), this.getRandomInteger(0, 255));
-  }
-
-  public RGBtoHex(first: number, second: number, third: number) {
-    const firstHex = first < 16 ? `0${first.toString(16)}` : first.toString(16);
-    const secondHex = second < 16 ? `0${second.toString(16)}` : second.toString(16);
-    const thirdHex = third < 16 ? `0${third.toString(16)}` : third.toString(16);
-    this.hexValue = `#${firstHex}${secondHex}${thirdHex}`;
-    return this.hexValue;
-  }
+export function formatDate(date: Date): string {
+  const day = date.getDate() < 10 ? `0${date.getDate()}` : `${date.getDate()}`;
+  const month = date.getMonth() + 1 < 10 ? `0${date.getMonth() + 1}` : `${date.getMonth() + 1}`;
+  const year = date.getFullYear() < 10 ? `0${date.getFullYear()}` : `${date.getFullYear()}`;
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const seconds = date.getSeconds();
+  const time = `${hours < 10 ? `0${hours}` : hours}:${minutes < 10 ? `0${minutes}` : minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
+  return `${day}.${month}.${year}, ${time}`;
 }
 
-export default Util;
+export function getFirstUnreadedMsgId(messages: MessageOutcome[], self: string): string {
+  let id = '';
+  messages.some((message) => {
+    if (message.from !== self && !message.status.isReaded) {
+      id = message.id;
+      return true;
+    }
+    return false;
+  });
+  return id;
+}
+
+export function getScrollMsgId(messages: MessageOutcome[], self: string): string {
+  let id = '';
+  if (messages.length > 0)
+    if (messages.some((message) => message.from !== self && !message.status.isReaded)) {
+      const firstUnreadMsg = messages.find((message) => message.from !== self && !message.status.isReaded);
+      if (firstUnreadMsg) id = firstUnreadMsg.id;
+    } else {
+      const lastReadMsg = messages.pop();
+      if (lastReadMsg) id = lastReadMsg.id;
+    }
+
+  return id;
+}
+
+export function showError(event: Event, modalError: Component) {
+  if (!(event instanceof CustomEvent)) return;
+
+  modalError.setTextContent(event.detail);
+  modalError.addClass('modal__error_show');
+}

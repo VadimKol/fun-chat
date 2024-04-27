@@ -224,11 +224,14 @@ export default class ServerConnection {
 
     if (response.type === requestType) {
       let details: ResponseUser[] | ResponseUser | MessageOutcome | StatusMsg | MessageOutcome[] | null = null;
+
       if ('users' in response.payload) details = response.payload.users;
       if ('user' in response.payload) details = response.payload.user;
       if ('message' in response.payload) details = response.payload.message;
       if ('messages' in response.payload) details = response.payload.messages;
+
       currentView.dispatchEvent(new CustomEvent(outputEventName, { detail: details, bubbles: true }));
+
       if (requestType === RequestType.USER_LOGIN)
         this.connection.dispatchEvent(new CustomEvent(outputEventName, { bubbles: true }));
     }
