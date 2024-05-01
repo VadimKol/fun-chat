@@ -1,5 +1,4 @@
 .input {
-  //font-family: "Gagalin", sans-serif;
   font-weight: 600;
   letter-spacing: 1px;
   padding: 10px 15px;
@@ -8,15 +7,6 @@
   box-sizing: border-box;
   border: 1px solid darkgray;
   background-color: wheat;
-  //background-color: var(--btn-back);
-  //text-transform: uppercase;
-  //transition: background-color 0.3s;
-/*   @media (hover: hover) {
-    &:hover {
-        cursor: pointer;
-        background-color: var(--btn-back-hover);
-    }
-  } */
   &:focus {
     border: 1px solid black;
   }

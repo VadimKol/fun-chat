@@ -31,13 +31,11 @@ export default class HistoryRouterHandler {
       HistoryRouterHandler.setHistory(path);
     }
 
-    // редирект на логин, если неавторизованный вводит chat
     if (path === Pages.CHAT && sessionStorage.getItem('loginVK') === null) {
       path = Pages.LOGIN;
       HistoryRouterHandler.setHistory(path);
     }
 
-    // редирект на чат, если авторизованный вводит login
     if (path === Pages.LOGIN && sessionStorage.getItem('loginVK') !== null) {
       path = Pages.CHAT;
       HistoryRouterHandler.setHistory(path);
