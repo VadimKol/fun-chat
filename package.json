@@ -8,9 +8,9 @@
   "scripts": {
     "build": "webpack",
     "dev": "webpack serve --env develop",
-    "deploy": "npm run build && npx gh-pages -d dist -e fun-chat",
+    "deploy": "npm run build && npx gh-pages -d dist",
     "lint": "eslint src",
-    "prepare": "cd .. && husky fun-chat/.husky",
+    "prepare": "husky",
     "format": "prettier -w src",
     "ci:format": "prettier -c src"
   },
