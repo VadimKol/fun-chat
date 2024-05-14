@@ -14,7 +14,7 @@ class App {
     document.body.classList.add('body');
     this.preLoginError = this.preLoginError.bind(this);
     this.router = new Router(this.createRoutes(), this.preLoginError);
-    this.serverConnection = new ServerConnection('ws://localhost:4000', this.router);
+    this.serverConnection = new ServerConnection('wss://fun-chat-vadimkol.amvera.io', this.router);
     this.preOpen = this.preOpen.bind(this);
   }
 
